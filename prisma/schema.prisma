@@ -1,0 +1,267 @@
+// This is your Prisma schema file,
+//learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model - Untuk authentication dan role management
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  emailVerified Boolean?
+  image         String?
+  password      String?
+  role          UserRole @default(CASHIER)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transactions  Transaction[]
+  cashRegisters CashRegister[]
+  auditLogs     AuditLog[]
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verifications")
+}
+
+// Audit Log - Mencatat semua aktivitas penting
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // LOGIN, LOGOUT, CREATE_TRANSACTION, UPDATE_STOCK, etc.
+  entity    String?  // TRANSACTION, PRODUCT, CASH_REGISTER, etc.
+  entityId  String?
+  details   String?  @db.Text
+  oldValue  String?  @db.Text // Nilai lama (JSON)
+  newValue  String?  @db.Text // Nilai baru (JSON)
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum UserRole {
+  ADMIN
+  CASHIER
+}
+
+// Category Model - Kategori produk
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products Product[]
+
+  @@map("categories")
+}
+
+// Product Model - Produk yang dijual
+model Product {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  name        String
+  description String?  @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  cost        Decimal  @db.Decimal(10, 2) // Harga modal
+  stock       Int      @default(0)
+  minStock    Int      @default(5) // Minimum stock warning
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  unit        String   @default("Pcs")
+  categoryId  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category             Category?             @relation(fields: [categoryId], references: [id])
+  transactionItems     TransactionItem[]
+  inventoryAdjustments InventoryAdjustment[]
+
+  @@index([categoryId])
+  @@index([sku])
+  @@map("products")
+}
+
+// Transaction Model - Transaksi penjualan
+model Transaction {
+  id              String            @id @default(cuid())
+  invoiceNumber   String            @unique
+  totalAmount     Decimal           @db.Decimal(10, 2)
+  discountAmount  Decimal           @default(0) @db.Decimal(10, 2)
+  taxAmount       Decimal           @default(0) @db.Decimal(10, 2)
+  finalAmount     Decimal           @db.Decimal(10, 2)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus     @default(COMPLETED)
+  cashReceived    Decimal?          @db.Decimal(10, 2) // Untuk cash payment
+  changeAmount    Decimal?          @db.Decimal(10, 2) // Kembalian
+  customerName    String?
+  notes           String?           @db.Text
+  userId          String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user             User               @relation(fields: [userId], references: [id])
+  transactionItems TransactionItem[]
+  cashRegisterId   String?
+  cashRegister     CashRegister?      @relation(fields: [cashRegisterId], references: [id])
+
+  @@index([userId])
+  @@index([invoiceNumber])
+  @@index([cashRegisterId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+// Cash Register - Untuk Buka/Tutup Kas
+model CashRegister {
+  id              String         @id @default(cuid())
+  userId          String
+  openingBalance  Decimal        @db.Decimal(10, 2)
+  closingBalance  Decimal?       @db.Decimal(10, 2)
+  totalSales      Decimal        @default(0) @db.Decimal(10, 2)
+  actualCash      Decimal?       @db.Decimal(10, 2) // Uang tunai fisik saat tutup
+  status          RegisterStatus @default(OPEN)
+  openingNotes    String?        @db.Text
+  closingNotes    String?        @db.Text
+  openedAt        DateTime       @default(now())
+  closedAt        DateTime?
+
+  user            User           @relation(fields: [userId], references: [id])
+  transactions    Transaction[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("cash_registers")
+}
+
+enum RegisterStatus {
+  OPEN
+  CLOSED
+}
+
+enum PaymentMethod {
+  CASH
+  QRIS
+  DEBIT_CARD
+  CREDIT_CARD
+  E_WALLET
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+// TransactionItem Model - Item dalam transaksi
+model TransactionItem {
+  id            String   @id @default(cuid())
+  transactionId String
+  productId     String
+  productName   String // Simpan nama produk saat transaksi untuk history
+  quantity      Int
+  price         Decimal  @db.Decimal(10, 2) // Harga saat transaksi
+  subtotal      Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id])
+
+  @@index([transactionId])
+  @@index([productId])
+  @@map("transaction_items")
+}
+
+// Stock Adjustment - Untuk stok masuk/keluar
+model InventoryAdjustment {
+  id        String                 @id @default(cuid())
+  productId String
+  type      StockAdjustmentType    @default(IN)
+  quantity  Int
+  cost      Decimal?               @db.Decimal(10, 2) // Harga modal saat stok masuk
+  price     Decimal?               @db.Decimal(10, 2) // Harga jual saat stok masuk
+  notes     String?                @db.Text
+  createdAt DateTime               @default(now())
+
+  product   Product                @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@map("inventory_adjustments")
+}
+
+enum StockAdjustmentType {
+  IN
+  OUT
+}
+
+// Settings Model - Pengaturan aplikasi
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
