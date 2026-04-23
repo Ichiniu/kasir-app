@@ -74,7 +74,7 @@ const sidebarItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const userRole = session?.user?.role || "CASHIER";
+  const userRole = (session?.user as any)?.role || "CASHIER";
 
   const filteredItems = sidebarItems.filter(item => {
     if (item.roles && !item.roles.includes(userRole)) return false;
@@ -119,7 +119,7 @@ export function Sidebar() {
       {/* Bottom Action Area */}
       <div className="p-4 border-t border-[#f3f4f6]">
         <button 
-          onClick={() => signOut({ fetchOptions: { onSuccess: () => window.location.href = "/login" } })}
+          onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/login" } } })}
           className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-[#6b7280] hover:text-[#ef4444] hover:bg-red-50 transition-all duration-200 group"
         >
           <LogOut size={18} className="group-hover:scale-110 transition-transform" />

@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, User, Users, Search } from "lucide-react"
+import { ChevronDown, User, Users, Search, ShoppingCart } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type Transaction = {

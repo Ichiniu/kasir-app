@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Lock, AlertCircle, TrendingUp, Wallet, Banknote } from "lucide-react"
 import { closeCashRegister } from "./actions"
 import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 interface TutupKasFormProps {
   activeRegister: {

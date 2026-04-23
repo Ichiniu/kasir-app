@@ -35,6 +35,7 @@ export default async function RiwayatPenjualanPage() {
   // Serialize for Client Component
   const serializableTransactions = transactions.map(t => ({
     ...t,
+    customerName: t.customerName || "Pelanggan",
     totalAmount: Number(t.totalAmount),
     discountAmount: Number(t.discountAmount),
     taxAmount: Number(t.taxAmount),
@@ -43,6 +44,7 @@ export default async function RiwayatPenjualanPage() {
     changeAmount: t.changeAmount ? Number(t.changeAmount) : null,
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString(),
+    cashRegisterId: t.cashRegisterId || "",
     cashRegister: t.cashRegister ? {
       ...t.cashRegister,
       openingBalance: Number(t.cashRegister.openingBalance),

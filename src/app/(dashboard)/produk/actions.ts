@@ -26,7 +26,7 @@ export async function upsertProduct(data: any) {
     minStock: parseInt(String(rest.minStock || 5)),
   }
 
-  let product;
+  let product: any;
   if (id) {
     // Fetch old product data before update
     const oldProduct = await prisma.product.findUnique({
