@@ -20,7 +20,9 @@ export default async function WeeklyReportPage({
     end: new Date(endDateParam)
   } : undefined
 
-  const data = await getReportData("weekly", date, range)
-
-  return <ReportView title="Laporan Mingguan" data={data} type="weekly" />
+  return (
+    <React.Suspense fallback={<div className="p-10 text-center text-sm text-gray-500">Memuat laporan mingguan...</div>}>
+      <ReportView title="Laporan Mingguan" data={data} type="weekly" />
+    </React.Suspense>
+  )
 }
