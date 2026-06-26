@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect, useRef } from "react"
 import { 
   Search, 
   ShoppingCart, 
@@ -10,7 +10,10 @@ import {
   CheckCircle2,
   AlertCircle,
   LayoutGrid,
-  List
+  List,
+  Loader2,
+  QrCode,
+  RefreshCw
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,6 +42,58 @@ export function Cashier({
   const [error, setError] = useState("")
   const [customerName, setCustomerName] = useState("")
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "QRIS">("CASH")
+
+  const [showQrisModal, setShowQrisModal] = useState(false)
+  const [qrUrl, setQrUrl] = useState("")
+  const [activeInvoice, setActiveInvoice] = useState("")
+
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const startPolling = (invoiceNumber: string) => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+    }
+
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/payment/status?invoiceNumber=${invoiceNumber}`)
+        const result = await response.json()
+
+        if (result.success) {
+          if (result.paymentStatus === "COMPLETED") {
+            stopPolling()
+            setShowQrisModal(false)
+            setCart([])
+            setCashReceived("")
+            setCustomerName("")
+            setShowSuccess(true)
+            setTimeout(() => setShowSuccess(false), 3000)
+          } else if (result.paymentStatus === "CANCELLED") {
+            stopPolling()
+            setShowQrisModal(false)
+            setError("Pembayaran kedaluwarsa atau dibatalkan.")
+          }
+        }
+      } catch (err) {
+        console.error("Error polling payment status:", err)
+      }
+    }, 3000)
+  }
+
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+      }
+    }
+  }, [])
 
   const filteredProducts = useMemo(() => {
     return initialProducts.filter(p => 
@@ -116,6 +171,40 @@ export function Cashier({
     setLoading(true)
     setShowConfirm(false) // Close confirm modal
     setError("")
+
+    if (paymentMethod === "QRIS") {
+      try {
+        const response = await fetch("/api/payment/qris", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            items: cart,
+            totalAmount: subtotal,
+            finalAmount: total,
+            customerName: customerName || "Umum",
+            cashRegisterId: cashRegisterId
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.qrUrl) {
+          setQrUrl(result.qrUrl);
+          setActiveInvoice(result.invoiceNumber);
+          setShowQrisModal(true);
+          startPolling(result.invoiceNumber);
+        } else {
+          setError(result.error || "Gagal membuat kode QRIS.");
+        }
+      } catch (err: any) {
+        setError("Gagal menghubungi server pembayaran.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     // Sanitize cash received string to number
     const sanitizedCash = Number(cashReceived.replace(/[^0-9]/g, ""))
@@ -539,6 +628,70 @@ export function Cashier({
             >
               SELESAI
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* QRIS Dynamic Modal Overlay */}
+      {showQrisModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300 px-4">
+          <div className="w-full max-w-md overflow-hidden bg-white rounded-[32px] shadow-2xl border border-gray-100 flex flex-col items-center p-6 gap-6 relative animate-in zoom-in-95 duration-300 m-4">
+            <style dangerouslySetInnerHTML={{__html: `
+              @keyframes scan {
+                0%, 100% { top: 0%; }
+                50% { top: 100%; }
+              }
+              .animate-scan {
+                position: absolute;
+                animation: scan 2.5s linear infinite;
+              }
+            `}} />
+            
+            <div className="w-full text-center">
+              <span className="text-[10px] font-bold text-[#5E54F7] bg-[#5E54F7]/5 px-2.5 py-1 rounded-full border border-[#5E54F7]/10 uppercase tracking-wider">
+                Pembayaran QRIS Dynamic
+              </span>
+              <h2 className="text-xl font-extrabold text-[#111827] tracking-tight mt-3">
+                {activeInvoice}
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">Nama Pelanggan: <span className="font-semibold text-gray-800">{customerName || "UMUM"}</span></p>
+            </div>
+
+            {/* QR Scanner Container */}
+            <div className="relative w-64 h-64 border-2 border-dashed border-[#5E54F7]/30 rounded-2xl p-2 bg-white shadow-inner flex items-center justify-center overflow-hidden">
+              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[#5E54F7] rounded-tl-lg"></div>
+              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[#5E54F7] rounded-tr-lg"></div>
+              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[#5E54F7] rounded-bl-lg"></div>
+              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[#5E54F7] rounded-br-lg"></div>
+              
+              <img src={qrUrl} alt="Midtrans QRIS Code" className="w-full h-full object-contain rounded-lg" />
+              
+              <div className="animate-scan left-0 right-0 h-0.5 bg-emerald-500 shadow-[0_0_8px_#10b981] opacity-70"></div>
+            </div>
+
+            <div className="w-full text-center space-y-1">
+              <span className="text-xs text-gray-500 font-medium">TOTAL TAGIHAN</span>
+              <div className="text-2xl font-black text-gray-900">{formatCurrency(total)}</div>
+            </div>
+
+            {/* Polling / Waiting Indicator */}
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-2xl w-full justify-center">
+              <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
+              <span className="text-xs font-bold tracking-tight">Menunggu pembayaran pelanggan...</span>
+            </div>
+
+            <div className="w-full grid grid-cols-1">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  stopPolling();
+                  setShowQrisModal(false);
+                }}
+                className="w-full h-11 rounded-xl border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 active:scale-[0.98] transition-all"
+              >
+                BATALKAN / TUTUP
+              </Button>
+            </div>
           </div>
         </div>
       )}

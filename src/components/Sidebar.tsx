@@ -74,7 +74,13 @@ const sidebarItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const userRole = (session?.user as any)?.role || "CASHIER";
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const userRole = mounted && (session?.user as any)?.role ? (session.user as any).role : "CASHIER";
 
   const filteredItems = sidebarItems.filter(item => {
     if (item.roles && !item.roles.includes(userRole)) return false;

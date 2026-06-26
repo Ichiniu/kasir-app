@@ -6,7 +6,7 @@ import { createLog } from "@/lib/audit"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { z } from "zod"
-import { PaymentMethod } from "@prisma/client"
+import { PaymentMethod, PaymentStatus } from "@prisma/client"
 
 const inputSchema = z.object({
   items: z.array(z.object({
@@ -21,6 +21,7 @@ const inputSchema = z.object({
   taxAmount: z.number().or(z.string().transform(v => parseFloat(v))).optional().default(0),
   finalAmount: z.number().or(z.string().transform(v => parseFloat(v))),
   paymentMethod: z.nativeEnum(PaymentMethod),
+  paymentStatus: z.nativeEnum(PaymentStatus).optional().default(PaymentStatus.COMPLETED),
   cashReceived: z.number().or(z.string().transform(v => parseFloat(v))).optional().nullable(),
   changeAmount: z.number().or(z.string().transform(v => parseFloat(v))).optional().nullable(),
   customerName: z.string().optional().nullable(),
@@ -66,6 +67,7 @@ export async function createTransaction(rawData: any) {
           taxAmount: data.taxAmount,
           finalAmount: data.finalAmount,
           paymentMethod: data.paymentMethod,
+          paymentStatus: data.paymentStatus,
           cashReceived: data.cashReceived || null,
           changeAmount: data.changeAmount || null,
           customerName: data.customerName || "Umum",
@@ -86,8 +88,8 @@ export async function createTransaction(rawData: any) {
         }
       })
 
-      // Update CashRegister total sales
-      if (data.cashRegisterId) {
+      // Update CashRegister total sales only if payment status is COMPLETED
+      if (data.cashRegisterId && data.paymentStatus === PaymentStatus.COMPLETED) {
         await tx.cashRegister.update({
           where: { id: data.cashRegisterId },
           data: {
