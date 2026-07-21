@@ -1,5 +1,8 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
 import { StockInList } from "./StockInList";
 
 export default async function StokMasukPage({

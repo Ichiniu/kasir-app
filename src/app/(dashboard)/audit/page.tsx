@@ -1,5 +1,7 @@
 import React from "react"
 import { prisma } from "@/lib/prisma"
+
+export const dynamic = "force-dynamic";
 import { ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"

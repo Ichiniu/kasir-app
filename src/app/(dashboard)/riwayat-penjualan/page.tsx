@@ -2,6 +2,8 @@ import React from "react"
 import { prisma } from "@/lib/prisma"
 import { TransactionList } from "./TransactionList"
 
+export const dynamic = "force-dynamic";
+
 export default async function RiwayatPenjualanPage() {
   const transactions = await prisma.transaction.findMany({
     include: {

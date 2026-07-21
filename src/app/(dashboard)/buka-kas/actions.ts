@@ -68,5 +68,12 @@ export async function openCashRegister(openingBalance: number, notes?: string) {
     `Buka kas dengan modal awal Rp ${openingBalance.toLocaleString('id-ID')}`
   )
 
-  return { success: true, register: newRegister }
+  return { 
+    success: true, 
+    register: {
+      id: newRegister.id,
+      openingBalance: Number(newRegister.openingBalance),
+      status: newRegister.status
+    }
+  }
 }

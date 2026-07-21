@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma"
 import { Cashier } from "./Cashier"
 import { redirect } from "next/navigation"
 
+export const dynamic = "force-dynamic";
+
 export default async function KasirPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   

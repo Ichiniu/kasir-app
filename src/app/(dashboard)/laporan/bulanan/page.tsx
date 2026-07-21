@@ -11,6 +11,8 @@ export default async function MonthlyReportPage({
   const dateParam = typeof sp?.date === "string" ? sp.date : undefined
   const date = dateParam ? new Date(dateParam) : new Date()
 
+  const data = await getReportData("monthly", date)
+
   return (
     <React.Suspense fallback={<div className="p-10 text-center text-sm text-gray-500">Memuat laporan bulanan...</div>}>
       <ReportView title="Laporan Bulanan" data={data} type="monthly" />
