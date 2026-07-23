@@ -5,7 +5,7 @@ echo "🚀 Starting deployment for Kasir App..."
 
 # 1. Pull latest changes
 echo "📥 Pulling latest updates from git repository..."
-git pull origin main
+git pull origin master
 
 # 2. Build Docker images
 echo "🏗️ Building Docker containers..."
