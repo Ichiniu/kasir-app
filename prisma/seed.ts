@@ -10,16 +10,18 @@ async function main() {
   const hashedPassword = await bcrypt.hash('admin123', 10)
   
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@kasir.com' },
-    update: {},
+    where: { email: 'admin@admin.com' },
+    update: {
+      password: hashedPassword,
+    },
     create: {
-      email: 'admin@kasir.com',
+      email: 'admin@admin.com',
       name: 'Admin',
       password: hashedPassword,
       role: 'ADMIN',
       accounts: {
         create: {
-          accountId: 'admin@kasir.com',
+          accountId: 'admin@admin.com',
           providerId: 'credential',
           password: hashedPassword,
         }
@@ -33,16 +35,18 @@ async function main() {
   const cashierPassword = await bcrypt.hash('cashier123', 10)
   
   const cashier = await prisma.user.upsert({
-    where: { email: 'cashier@kasir.com' },
-    update: {},
+    where: { email: 'kasir@kasir.com' },
+    update: {
+      password: cashierPassword,
+    },
     create: {
-      email: 'cashier@kasir.com',
+      email: 'kasir@kasir.com',
       name: 'Kasir 1',
       password: cashierPassword,
       role: 'CASHIER',
       accounts: {
         create: {
-          accountId: 'cashier@kasir.com',
+          accountId: 'kasir@kasir.com',
           providerId: 'credential',
           password: cashierPassword,
         }
@@ -232,8 +236,8 @@ async function main() {
 
   console.log('✅ Seeding completed!')
   console.log('\n📝 Login credentials:')
-  console.log('Admin - Email: admin@kasir.com, Password: admin123')
-  console.log('Cashier - Email: cashier@kasir.com, Password: cashier123')
+  console.log('Admin - Email: admin@admin.com, Password: admin123')
+  console.log('Cashier - Email: kasir@kasir.com, Password: kasir123')
 }
 
 main()

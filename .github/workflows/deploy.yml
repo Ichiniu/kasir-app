@@ -3,7 +3,7 @@ name: Kasir App Production Deployment
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Execute remote SSH deployment
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -22,6 +19,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            cd /path/to/kasir-app
+            cd /home/ikhsan-wahyu/homelab/apps/kasir/kasir-app
             chmod +x scripts/deploy.sh
             ./scripts/deploy.sh

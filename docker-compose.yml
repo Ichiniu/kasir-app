@@ -24,16 +24,16 @@ services:
     container_name: kasir_nextjs
     restart: always
     ports:
-      - "3000:3000"
+      - "3003:3000"
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL:-postgresql://kasir_user:kasir_password_secret@postgres:5432/kasir_db?schema=public}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-super-secret-key-change-this-in-production}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-https://casirplus.my.id}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://casirplus.my.id}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-super-secret-key-change-this-in-production}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Kasir App}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://casirplus.my.id}
       MIDTRANS_SERVER_KEY: ${MIDTRANS_SERVER_KEY:-}
       MIDTRANS_CLIENT_KEY: ${MIDTRANS_CLIENT_KEY:-}
       NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: ${NEXT_PUBLIC_MIDTRANS_CLIENT_KEY:-}
