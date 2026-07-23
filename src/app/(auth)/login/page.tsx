@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { loginSchema } from '@/utils/validation'
 
@@ -55,131 +55,102 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex w-full font-sans bg-white">
-      {/* Kiri - Form Login */}
-      <div className="w-full md:w-[480px] lg:w-[550px] bg-white p-8 md:p-16 flex flex-col justify-center shrink-0 z-10 relative">
-        {/* Logo & Judul */}
-        <div className="flex items-center gap-4 mb-8">
-          <svg width="45" height="24" viewBox="0 0 100 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 20C15 10 20 10 25 20C30 30 35 30 40 20C45 10 50 10 55 20C60 30 65 30 70 20C75 10 80 10 85 20" stroke="#000" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-            <circle cx="85" cy="20" r="4" fill="#F97316" />
-          </svg>
-          <div>
-            <h1 className="text-2xl font-bold text-[#EA7B2A] tracking-tight">Sistem Kepegawaian</h1>
-            <p className="text-xs font-medium text-gray-500">JMC IT Consultant</p>
-          </div>
-        </div>
-        
-        <p className="text-sm text-gray-700 mb-8 leading-relaxed pr-10">
-          Selamat Datang, silahkan masukkan username dan password anda!
-        </p>
+    <div 
+      className="min-h-screen flex items-center justify-center bg-cover bg-center font-sans"
+      style={{ backgroundImage: "url('/cafe-bg.png')" }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-green-900/10 backdrop-blur-[2px]"></div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          {error && (
-            <Alert variant="destructive" className="bg-red-50 text-red-600 border-red-200">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">{error}</AlertDescription>
-            </Alert>
-          )}
+      <div className="relative w-full max-w-[420px] p-4 animate-in fade-in zoom-in duration-700">
+        <div className="bg-white/40 backdrop-blur-xl border border-white/30 shadow-2xl rounded-[40px] px-10 py-12">
           
-          <div className="space-y-1">
-            <Input
-              id="email"
-              type="email"
-              placeholder="Username / Email / NIP"
-              className="h-12 bg-[#F7F9FA] border-0 focus-visible:ring-1 focus-visible:ring-[#EA7B2A] rounded-md text-gray-800 placeholder:text-gray-400"
-              {...register('email')}
-            />
-            {errors.email && (
-              <p className="text-[10px] text-red-500 ml-1">{errors.email.message}</p>
-            )}
+          <div className="text-center mb-10">
+            <h1 className="text-[44px] font-serif font-semibold text-[#374151] tracking-tight mb-2">Kasirku</h1>
           </div>
 
-          <div className="space-y-1">
-            <Input
-              id="password"
-              type="password"
-              placeholder="Password"
-              className="h-12 bg-[#F7F9FA] border-0 focus-visible:ring-1 focus-visible:ring-[#EA7B2A] rounded-md text-gray-800 placeholder:text-gray-400"
-              {...register('password')}
-            />
-            {errors.password && (
-              <p className="text-[10px] text-red-500 ml-1">{errors.password.message}</p>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {error && (
+              <Alert variant="destructive" className="bg-red-50/50 border-red-200 backdrop-blur-sm">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">{error}</AlertDescription>
+              </Alert>
             )}
-          </div>
+            
+            <div className="space-y-1">
+              <Input
+                id="email"
+                type="email"
+                placeholder="Email Address"
+                className="h-12 bg-white/50 border-white/50 focus:border-green-500/50 focus:ring-0 rounded-xl placeholder:text-gray-500 text-gray-800"
+                {...register('email')}
+              />
+              {errors.email && (
+                <p className="text-[10px] text-red-500 ml-2">{errors.email.message}</p>
+              )}
+            </div>
 
-          {/* Dummy Captcha Section */}
-          <div className="space-y-4 pt-1">
-            <div className="flex items-center gap-4">
-              <div className="bg-[#F7F9FA] border border-gray-200 px-8 py-3 rounded-md">
-                <span className="text-xl font-mono font-bold tracking-[0.3em] text-gray-800 pointer-events-none select-none">
-                  NEgEk
-                </span>
+            <div className="space-y-1">
+              <Input
+                id="password"
+                type="password"
+                placeholder="Password"
+                className="h-12 bg-white/50 border-white/50 focus:border-green-500/50 focus:ring-0 rounded-xl placeholder:text-gray-500 text-gray-800"
+                {...register('password')}
+              />
+              {errors.password && (
+                <p className="text-[10px] text-red-500 ml-2">{errors.password.message}</p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full h-12 bg-[#a3b38c] hover:bg-[#8e9d77] text-white font-medium text-lg rounded-full transition-all duration-300 shadow-lg shadow-green-900/10 active:scale-[0.98]"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-10">
+            <div className="relative mb-8">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-400/30" />
               </div>
-              <button type="button" className="text-xs text-blue-500 hover:text-blue-700 font-medium">
-                Refresh
+              <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
+                <span className="bg-transparent px-3 text-gray-500/80 font-medium italic">Or continue with</span>
+              </div>
+            </div>
+
+            <div className="flex justify-center gap-6">
+              <button className="w-12 h-12 rounded-full bg-white/50 flex items-center justify-center hover:bg-white/80 transition-colors shadow-sm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.19 3.32v2.76h3.54c2.08-1.92 3.29-4.74 3.29-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.54-2.76c-.98.66-2.23 1.06-3.74 1.06-2.88 0-5.33-1.94-6.2-4.54H2.18v2.84A10.99 10.99 0 0012 23z" fill="#34A853"/>
+                  <path d="M5.8 14.1a6.6 6.6 0 010-4.2V7.06H2.18a10.99 10.99 0 000 9.88l3.62-2.84z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.22 1 3.21 3.74 1.18 7.76l3.62 2.84c.87-2.6 3.32-4.54 6.2-4.54z" fill="#EA4335"/>
+                </svg>
+              </button>
+              <button className="w-12 h-12 rounded-full bg-white/50 flex items-center justify-center hover:bg-white/80 transition-colors shadow-sm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12.152 6.896c-.548 0-1.411-.516-1.411-1.308 0-1.057.846-1.885 1.885-1.885.526 0 1.411.516 1.411 1.308 0 1.057-.846 1.885-1.885 1.885zm3.513 14.604c-1.182 0-1.911-.648-2.911-.648-1 0-1.782.648-2.911.648-1.576 0-3.754-2.231-3.754-5.347 0-3.39 2.115-5.378 4.14-5.378 1.03 0 1.821.54 2.525.54.704 0 1.396-.54 2.525-.54 1.636 0 3.279.945 3.974 2.373-3.212 1.623-2.696 5.367.437 6.442-.647 1.408-1.488 2.91-2.975 2.91z" />
+                </svg>
               </button>
             </div>
-            
-            <Input
-              type="text"
-              placeholder="Ketik kode captcha di atas"
-              className="h-12 bg-[#F7F9FA] border-0 focus-visible:ring-1 focus-visible:ring-[#EA7B2A] rounded-md text-gray-800 placeholder:text-gray-400"
-            />
           </div>
-
-          {/* Remember Me */}
-          <div className="flex items-center gap-2 pt-2 pb-4">
-            <input 
-              type="checkbox" 
-              id="remember" 
-              className="w-4 h-4 rounded border-gray-300 text-[#EA7B2A] focus:ring-[#EA7B2A]"
-            />
-            <label htmlFor="remember" className="text-sm font-medium text-gray-700 cursor-pointer">
-              Remember Me
-            </label>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full h-12 bg-[#EA7B2A] hover:bg-[#d66a21] text-white font-bold text-sm rounded-md transition-colors"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              'MASUK'
-            )}
-          </Button>
-        </form>
-      </div>
-
-      {/* Kanan - Image Carousel */}
-      <div className="hidden md:block flex-1 relative bg-gray-100 overflow-hidden">
-        {/* Gunakan gambar background cafe-bg.png atau default image lainnya */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
-          style={{ backgroundImage: "url('/cafe-bg.png')" }}
-        />
-        
-        {/* Gradient Overlay tipis agar tidak terlalu flat */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
-
-        {/* Carousel Controls */}
-        <button className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-transform hover:scale-110">
-          <ChevronLeft className="w-12 h-12" strokeWidth={1.5} />
-        </button>
-        <button className="absolute right-6 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600 transition-transform hover:scale-110">
-          <ChevronRight className="w-12 h-12" strokeWidth={1.5} />
-        </button>
-
-        {/* Indicators */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
-          <span className="w-2 h-2 rounded-full bg-blue-600" />
-          <span className="w-2 h-2 rounded-full bg-gray-300/80" />
-          <span className="w-2 h-2 rounded-full bg-gray-300/80" />
         </div>
       </div>
+
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+        h1 {
+          font-family: 'Playfair Display', serif !important;
+        }
+      `}</style>
     </div>
   )
 }
@@ -187,9 +158,9 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white text-gray-800 font-sans">
+      <div className="min-h-screen flex items-center justify-center bg-green-950 text-white font-sans">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-[#EA7B2A]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#a3b38c]" />
           <span className="text-sm font-medium tracking-wide">Memuat halaman masuk...</span>
         </div>
       </div>
