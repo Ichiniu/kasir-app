@@ -13,6 +13,8 @@ async function main() {
     where: { email: 'admin@admin.com' },
     update: {
       password: hashedPassword,
+      role: 'ADMIN',
+      isActive: true,
     },
     create: {
       email: 'admin@admin.com',
@@ -29,6 +31,28 @@ async function main() {
     },
   })
 
+  const adminAccount = await prisma.account.updateMany({
+    where: {
+      userId: admin.id,
+      providerId: 'credential',
+      accountId: 'admin@admin.com',
+    },
+    data: {
+      password: hashedPassword,
+    },
+  })
+
+  if (adminAccount.count === 0) {
+    await prisma.account.create({
+      data: {
+        userId: admin.id,
+        accountId: 'admin@admin.com',
+        providerId: 'credential',
+        password: hashedPassword,
+      },
+    })
+  }
+
   console.log('✅ Admin user & account created:', admin.email)
 
   // Create cashier user
@@ -38,6 +62,8 @@ async function main() {
     where: { email: 'kasir@kasir.com' },
     update: {
       password: cashierPassword,
+      role: 'CASHIER',
+      isActive: true,
     },
     create: {
       email: 'kasir@kasir.com',
@@ -53,6 +79,28 @@ async function main() {
       }
     },
   })
+
+  const cashierAccount = await prisma.account.updateMany({
+    where: {
+      userId: cashier.id,
+      providerId: 'credential',
+      accountId: 'kasir@kasir.com',
+    },
+    data: {
+      password: cashierPassword,
+    },
+  })
+
+  if (cashierAccount.count === 0) {
+    await prisma.account.create({
+      data: {
+        userId: cashier.id,
+        accountId: 'kasir@kasir.com',
+        providerId: 'credential',
+        password: cashierPassword,
+      },
+    })
+  }
 
   console.log('✅ Cashier user & account created:', cashier.email)
 
