@@ -6,7 +6,7 @@ import { createLog } from "@/lib/audit"
 import { headers } from "next/headers"
 import { auth } from "@/lib/auth"
 import { z } from "zod"
-import { PaymentMethod, PaymentStatus } from "@prisma/client"
+import { PaymentStatus } from "@prisma/client"
 
 const inputSchema = z.object({
   items: z.array(z.object({
@@ -20,7 +20,7 @@ const inputSchema = z.object({
   discountAmount: z.number().or(z.string().transform(v => parseFloat(v))).optional().default(0),
   taxAmount: z.number().or(z.string().transform(v => parseFloat(v))).optional().default(0),
   finalAmount: z.number().or(z.string().transform(v => parseFloat(v))),
-  paymentMethod: z.nativeEnum(PaymentMethod),
+  paymentMethod: z.enum(["CASH", "QRIS"]),
   paymentStatus: z.nativeEnum(PaymentStatus).optional().default(PaymentStatus.COMPLETED),
   cashReceived: z.number().or(z.string().transform(v => parseFloat(v))).optional().nullable(),
   changeAmount: z.number().or(z.string().transform(v => parseFloat(v))).optional().nullable(),

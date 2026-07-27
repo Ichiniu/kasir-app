@@ -12,10 +12,7 @@ export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100]
 // Payment Methods
 export const PAYMENT_METHODS = [
   { value: 'CASH', label: 'Tunai' },
-  { value: 'DEBIT_CARD', label: 'Kartu Debit' },
-  { value: 'CREDIT_CARD', label: 'Kartu Kredit' },
-  { value: 'E_WALLET', label: 'E-Wallet' },
-  { value: 'BANK_TRANSFER', label: 'Transfer Bank' },
+  { value: 'QRIS', label: 'QRIS' },
 ] as const
 
 // Payment Status

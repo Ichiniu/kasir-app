@@ -51,7 +51,7 @@ export const transactionItemSchema = z.object({
 
 export const transactionSchema = z.object({
   items: z.array(transactionItemSchema).min(1, 'Minimal 1 item'),
-  paymentMethod: z.enum(['CASH', 'DEBIT_CARD', 'CREDIT_CARD', 'E_WALLET', 'BANK_TRANSFER']),
+  paymentMethod: z.enum(['CASH', 'QRIS']),
   cashReceived: z.number().min(0).optional(),
   discountAmount: z.number().min(0).default(0),
   taxAmount: z.number().min(0).default(0),

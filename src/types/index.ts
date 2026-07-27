@@ -39,10 +39,7 @@ export interface Product {
 
 export type PaymentMethod = 
   | 'CASH' 
-  | 'DEBIT_CARD' 
-  | 'CREDIT_CARD' 
-  | 'E_WALLET' 
-  | 'BANK_TRANSFER'
+  | 'QRIS'
 
 export type PaymentStatus = 
   | 'PENDING' 

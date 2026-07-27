@@ -56,7 +56,7 @@ async function main() {
   console.log('✅ Admin user & account created:', admin.email)
 
   // Create cashier user
-  const cashierPassword = await bcrypt.hash('cashier123', 10)
+  const cashierPassword = await bcrypt.hash('kasir123', 10)
   
   const cashier = await prisma.user.upsert({
     where: { email: 'kasir@kasir.com' },
