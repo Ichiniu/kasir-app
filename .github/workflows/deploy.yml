@@ -1,4 +1,4 @@
-name: Kasir App CI/CD
+name: Casir+ CI/CD
 
 on:
   push:
@@ -36,7 +36,7 @@ jobs:
       BETTER_AUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: ci-secret
       NEXTAUTH_URL: http://localhost:3000
-      NEXT_PUBLIC_APP_NAME: Kasir App
+      NEXT_PUBLIC_APP_NAME: Casir+
       NEXT_PUBLIC_APP_URL: http://localhost:3000
 
     steps:

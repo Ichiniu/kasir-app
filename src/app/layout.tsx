@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kasir App",
+  title: "Casir+",
   description: "Aplikasi Kasir Modern",
 };
 

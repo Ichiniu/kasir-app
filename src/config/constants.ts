@@ -2,7 +2,7 @@
  * Application Constants
  */
 
-export const APP_NAME = 'Kasir App'
+export const APP_NAME = 'Casir+'
 export const APP_DESCRIPTION = 'Aplikasi Kasir Modern untuk Toko Anda'
 
 // Pagination
