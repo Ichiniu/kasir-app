@@ -69,7 +69,7 @@ function LoginForm() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Casir+</h1>
-            <p className="text-xs font-medium text-gray-500">Modern POS System</p>
+            <p className="text-xs font-medium text-gray-500">By Ichsan Wahyu Utomo</p>
           </div>
         </div>
         
