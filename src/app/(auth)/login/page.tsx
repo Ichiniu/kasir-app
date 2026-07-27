@@ -68,7 +68,7 @@ function LoginForm() {
             </svg>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Kasir App</h1>
+            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Casir+</h1>
             <p className="text-xs font-medium text-gray-500">Modern POS System</p>
           </div>
         </div>
