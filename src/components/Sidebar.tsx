@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
+  Tag,
   Package,
   ArrowDownToLine,
   ShoppingCart,
@@ -31,6 +32,7 @@ const sidebarItems = [
     section: "PRODUK & INVENTORI",
     roles: ["ADMIN"],
     items: [
+      { title: "Kategori", href: "/kategori", icon: Tag },
       { title: "Produk", href: "/produk", icon: Package },
       { title: "Stok Masuk", href: "/stok-masuk", icon: ArrowDownToLine },
     ],
