@@ -15,9 +15,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma Client & Build Next.js
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
+# Dummy URL agar prisma generate bisa berjalan saat build (tidak butuh DB aktif)
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/db"
 
 RUN npx prisma generate
 RUN npm run build
@@ -25,6 +26,8 @@ RUN npm run build
 # 3. Stage Runner (Production)
 FROM node:20-alpine AS runner
 WORKDIR /app
+
+RUN apk add --no-cache bash
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -34,16 +37,30 @@ ENV HOSTNAME="0.0.0.0"
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy static assets and standalone build
+# Standalone Next.js build
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+# Prisma untuk migrate & seed saat runtime
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
+COPY --from=builder /app/node_modules/bcrypt ./node_modules/bcrypt
+COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs 2>/dev/null || true
+
+# package.json untuk tsx & prisma CLI
+COPY --from=builder /app/package.json ./package.json
+
+# Entrypoint script
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
+RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["/bin/bash", "./entrypoint.sh"]
