@@ -6,7 +6,10 @@ import { getSessionCookie } from "better-auth/cookies";
 const publicRoutes = ['/login', '/register']
 
 // Routes yang hanya bisa diakses oleh ADMIN
-const adminRoutes = ['/users', '/settings', '/audit', '/riwayat-kas']
+const adminRoutes = ['/audit', '/riwayat-kas']
+
+// Routes yang hanya bisa diakses oleh SUPERADMIN (Owner)
+const superAdminRoutes = ['/settings', '/users', '/cabang']
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -50,9 +53,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // Check admin-only routes
+  // Check Superadmin-only routes (/settings)
+  if (token && superAdminRoutes.some(route => pathname.startsWith(route))) {
+    if (token.role !== 'SUPERADMIN') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
+  // Check admin routes (/audit, /riwayat-kas)
   if (token && adminRoutes.some(route => pathname.startsWith(route))) {
-    if (token.role !== 'ADMIN') {
+    if (token.role !== 'ADMIN' && token.role !== 'SUPERADMIN') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }

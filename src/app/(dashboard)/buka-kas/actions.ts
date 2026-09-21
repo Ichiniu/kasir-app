@@ -2,18 +2,24 @@
 
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
 import { createLog } from "@/lib/audit"
+import { getSessionUser } from "@/lib/session"
 
 export async function checkCashRegister() {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) return { hasActiveRegister: false }
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch {
+    return { hasActiveRegister: false }
+  }
+
+  const { userId, outletId } = sessionUser
 
   const activeRegister = await prisma.cashRegister.findFirst({
     where: {
-      userId: session.user.id,
-      status: "OPEN"
+      userId,
+      status: "OPEN",
+      ...(outletId ? { outletId } : {})
     },
     select: {
       id: true,
@@ -32,12 +38,25 @@ export async function checkCashRegister() {
 }
 
 export async function openCashRegister(openingBalance: number, notes?: string) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) throw new Error("Unauthorized")
+  const { userId, outletId, isSuperAdmin, role } = await getSessionUser()
+
+  if (role === "ADMIN") {
+    throw new Error("Akses ditolak: Admin hanya memiliki hak akses read-only.")
+  }
+
+  if (!outletId && !isSuperAdmin) {
+    throw new Error("Pengguna tidak terhubung dengan outlet")
+  }
+
+  const targetOutletId = outletId || (await prisma.outlet.findFirst({ select: { id: true } }))?.id
+  if (!targetOutletId) {
+    throw new Error("Tidak ada data outlet yang tersedia")
+  }
 
   const activeRegister = await prisma.cashRegister.findFirst({
     where: {
-      userId: session.user.id,
+      userId,
+      outletId: targetOutletId,
       status: "OPEN"
     },
     select: {
@@ -45,11 +64,12 @@ export async function openCashRegister(openingBalance: number, notes?: string) {
     }
   })
 
-  if (activeRegister) throw new Error("An active cash register already exists")
+  if (activeRegister) throw new Error("Kasir ini sudah memiliki sesi kas yang aktif")
 
   const newRegister = await prisma.cashRegister.create({
     data: {
-      userId: session.user.id,
+      outletId: targetOutletId,
+      userId,
       openingBalance: openingBalance,
       status: "OPEN",
       openingNotes: notes
@@ -65,7 +85,10 @@ export async function openCashRegister(openingBalance: number, notes?: string) {
     "OPEN_CASH_REGISTER", 
     "CASH_REGISTER", 
     newRegister.id, 
-    `Buka kas dengan modal awal Rp ${openingBalance.toLocaleString('id-ID')}`
+    `Buka kas dengan modal awal Rp ${openingBalance.toLocaleString('id-ID')}`,
+    null,
+    null,
+    targetOutletId
   )
 
   return { 

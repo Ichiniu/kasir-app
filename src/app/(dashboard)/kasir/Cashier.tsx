@@ -24,11 +24,13 @@ import { createTransaction } from "./actions"
 export function Cashier({ 
   initialProducts, 
   userId, 
-  cashRegisterId 
+  cashRegisterId,
+  isReadOnly = false
 }: { 
   initialProducts: any[], 
   userId: string,
-  cashRegisterId: string
+  cashRegisterId: string,
+  isReadOnly?: boolean
 }) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [search, setSearch] = useState("")
@@ -196,12 +198,19 @@ export function Cashier({
               className="pl-11 h-11 rounded-lg bg-white border-[#e5e7eb] focus:ring-2 focus:ring-[#111827]/10 focus:border-[#111827] text-sm font-medium transition-all"
             />
           </div>
+
+          {isReadOnly && (
+            <div className="flex items-center gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+              <AlertCircle size={16} className="text-amber-600 shrink-0" />
+              <span>Mode Read-Only (Akses Admin): Transaksi kasir hanya dapat diproses oleh Kasir.</span>
+            </div>
+          )}
         </div>
 
         <div className={cn(
           "flex-1 overflow-y-auto pr-2 pb-4 custom-scrollbar",
           viewMode === "grid" 
-            ? "grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 content-start" 
+            ? "grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3.5 content-start" 
             : "flex flex-col gap-3"
         )}>
           {filteredProducts.map((p) => (
@@ -210,40 +219,41 @@ export function Cashier({
                 key={p.id}
                 onClick={() => addToCart(p)}
                 className={cn(
-                  "group p-3 flex flex-col h-[145px] cursor-pointer transition-all border border-[#e5e7eb] bg-white rounded-xl hover:border-[#111827] hover:shadow-sm",
+                  "group p-4 flex flex-col justify-between h-[155px] cursor-pointer transition-all border border-slate-200 bg-white rounded-2xl hover:border-[#FFB800] hover:shadow-lg hover:shadow-[#FFB800]/10 active:scale-[0.99]",
                   p.stock <= 0 && "opacity-40 cursor-not-allowed grayscale"
                 )}
               >
-                <div className="flex flex-col h-full justify-between gap-2 min-w-0">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-semibold text-[#111827] line-clamp-2 leading-snug">
-                        {p.name}
-                      </h3>
-                      <span className="shrink-0 text-[10px] font-mono font-bold text-[#5E54F7] bg-[#5E54F7]/5 px-1.5 py-0.5 rounded border border-[#5E54F7]/10 uppercase tracking-tighter">
-                        {p.sku}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-[#9ca3af] truncate">{p.category?.name || "Uncategorized"}</span>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-[#b38100] transition-colors">
+                      {p.name}
+                    </h3>
+                    <span className="shrink-0 text-[10px] font-mono font-bold text-amber-900 bg-[#FFB800]/20 px-2 py-0.5 rounded-md border border-[#FFB800]/40 uppercase tracking-tight">
+                      {p.sku}
+                    </span>
                   </div>
-                  
-                  <div className="flex items-end justify-between mt-auto pt-4">
-                    <span className="font-bold text-base text-[#111827] mb-1">
+                  <span className="text-[11px] font-medium text-slate-400 truncate">{p.category?.name || "Uncategorized"}</span>
+                </div>
+
+                <div className="flex items-end justify-between mt-auto pt-2 border-t border-slate-100">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400 font-medium">Harga</span>
+                    <span className="font-extrabold text-base text-slate-900">
                       {formatCurrency(Number(p.price))}
                     </span>
-                    <div className="flex flex-col items-end gap-2">
-                       <span className={cn(
-                          "text-[10px] font-bold px-1.5 py-0.5 rounded border shadow-sm",
-                          p.stock <= 5 
-                            ? "bg-red-50 text-red-600 border-red-100" 
-                            : "bg-[#f9fafb] text-[#6b7280] border-[#e5e7eb]"
-                       )}>
-                         Stok: {p.stock}
-                       </span>
-                       <div className="w-8 h-8 rounded-lg bg-[#f9fafb] border border-[#e5e7eb] flex items-center justify-center text-[#111827] group-hover:bg-[#111827] group-hover:text-white transition-all shadow-sm">
-                         <Plus size={16} />
-                       </div>
-                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <span className={cn(
+                        "text-[10px] font-semibold px-2 py-0.5 rounded-full border shadow-2xs",
+                        p.stock <= 5 
+                          ? "bg-red-50 text-red-600 border-red-200 font-bold" 
+                          : "bg-slate-50 text-slate-600 border-slate-200"
+                     )}>
+                       Stok: {p.stock}
+                     </span>
+                     <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-[#FFB800] group-hover:border-[#FFB800] group-hover:text-slate-950 transition-all shadow-xs">
+                       <Plus size={16} strokeWidth={2.5} />
+                     </div>
                   </div>
                 </div>
               </div>
@@ -252,35 +262,35 @@ export function Cashier({
                 key={p.id}
                 onClick={() => addToCart(p)}
                 className={cn(
-                  "group flex items-center gap-3 p-3 bg-white border border-[#e5e7eb] rounded-xl cursor-pointer transition-all hover:border-[#111827] hover:shadow-sm",
+                  "group flex items-center gap-4 p-3.5 bg-white border border-slate-200 rounded-2xl cursor-pointer transition-all hover:border-[#FFB800] hover:shadow-md hover:shadow-[#FFB800]/10 active:scale-[0.99]",
                   p.stock <= 0 && "opacity-40 cursor-not-allowed grayscale"
                 )}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-[#111827] truncate">
+                    <h3 className="text-sm font-bold text-slate-900 truncate group-hover:text-[#b38100] transition-colors">
                       {p.name}
                     </h3>
-                    <span className={cn(
-                      "shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-md border shadow-sm",
-                      p.stock <= 5 
-                        ? "bg-red-500 text-white border-red-600" 
-                        : p.stock <= 20
-                        ? "bg-amber-500 text-white border-amber-600"
-                        : "bg-emerald-500 text-white border-emerald-600"
-                    )}>
-                      Stok: {p.stock}
+                    <span className="text-[10px] font-mono font-bold text-amber-900 bg-[#FFB800]/20 px-2 py-0.5 rounded-md border border-[#FFB800]/40 shrink-0">
+                      {p.sku}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-mono font-bold text-[#5E54F7] bg-[#5E54F7]/5 px-1.5 py-0.5 rounded border border-[#5E54F7]/10">{p.sku}</span>
-                    <span className="text-[10px] text-[#9ca3af]">{p.category?.name || "Uncategorized"}</span>
+                    <span className="text-[11px] font-medium text-slate-400">{p.category?.name || "Uncategorized"}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-base text-[#111827]">{formatCurrency(Number(p.price))}</span>
-                  <div className="w-8 h-8 rounded-lg bg-[#f9fafb] border border-[#e5e7eb] flex items-center justify-center text-[#111827] group-hover:bg-[#111827] group-hover:text-white transition-all shadow-sm">
-                    <Plus size={16} />
+                <div className="flex items-center gap-4">
+                  <span className={cn(
+                    "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
+                    p.stock <= 5 
+                      ? "bg-red-50 text-red-600 border-red-200 font-bold" 
+                      : "bg-slate-50 text-slate-600 border-slate-200"
+                  )}>
+                    Stok: {p.stock}
+                  </span>
+                  <span className="font-extrabold text-base text-slate-900 min-w-[90px] text-right">{formatCurrency(Number(p.price))}</span>
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-[#FFB800] group-hover:border-[#FFB800] group-hover:text-slate-950 transition-all shadow-xs">
+                    <Plus size={16} strokeWidth={2.5} />
                   </div>
                 </div>
               </div>
@@ -436,11 +446,11 @@ export function Cashier({
               )}
 
               <Button 
-                disabled={loading || cart.length === 0}
+                disabled={loading || cart.length === 0 || isReadOnly}
                 onClick={handleCheckout}
-                className="w-full h-12 text-sm font-bold rounded-xl bg-[#111827] hover:bg-black text-white hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-30 disabled:grayscale"
+                className="w-full h-12 text-sm font-bold rounded-xl bg-[#111827] hover:bg-black text-white hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {loading ? "PROSES..." : "KONFIRMASI PEMBAYARAN"}
+                {isReadOnly ? "MODE READ-ONLY (ADMIN)" : loading ? "PROSES..." : "KONFIRMASI PEMBAYARAN"}
               </Button>
             </div>
           </div>

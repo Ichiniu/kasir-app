@@ -1,22 +1,34 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/session";
+import { redirect } from "next/navigation";
+import { ProductList } from "./ProductList";
 
 export const dynamic = "force-dynamic";
-
-import { ProductList } from "./ProductList";
 
 export default async function ProductPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch {
+    redirect("/login")
+  }
+
+  const { outletId, isSuperAdmin } = sessionUser
   const sp = await searchParams
   const page = typeof sp?.page === "string" ? parseInt(sp.page) : 1
   const limit = 10
   const skip = (page - 1) * limit
 
+  const outletFilter = isSuperAdmin ? {} : { outletId: outletId! }
+
   const [products, total, categories] = await Promise.all([
     prisma.product.findMany({
+      where: outletFilter,
       include: {
         category: true,
       },
@@ -26,8 +38,11 @@ export default async function ProductPage({
       take: limit,
       skip: skip
     }),
-    prisma.product.count(),
+    prisma.product.count({
+      where: outletFilter
+    }),
     prisma.category.findMany({
+      where: outletFilter,
       orderBy: {
         name: "asc",
       },

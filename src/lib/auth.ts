@@ -35,6 +35,10 @@ export const auth = betterAuth({
         required: true,
         defaultValue: true,
       },
+      outletId: {
+        type: "string",
+        required: false,
+      },
     },
   },
 });

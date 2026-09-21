@@ -128,7 +128,7 @@ export function StockInList({
         </div>
         <Button 
           onClick={() => setIsFormOpen(true)}
-          className="bg-[#5E54F7] hover:bg-[#4b43c6] text-white h-11 px-5 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-[#5E54F7]/20 active:scale-[0.98]"
+          className="bg-[#FFB800] hover:bg-[#e6a600] text-slate-950 font-bold h-11 px-5 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-[#FFB800]/20 active:scale-[0.98]"
         >
           <Plus size={18} />
           <span className="text-sm font-semibold">Tambah Stok</span>
@@ -189,7 +189,7 @@ export function StockInList({
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="font-semibold text-[#111827] text-sm">{adj.product.name}</span>
-                        <code className="text-[10px] font-mono font-medium text-[#5E54F7] bg-[#5E54F7]/5 px-1.5 py-0.5 rounded border border-[#5E54F7]/10">
+                        <code className="text-[10px] font-mono font-medium text-[#FFB800] bg-[#FFB800]/10 px-1.5 py-0.5 rounded border border-[#FFB800]/20">
                           {adj.product.sku}
                         </code>
                       </div>
@@ -239,7 +239,7 @@ export function StockInList({
                         href={`/stok-masuk?page=${p}`}
                         className={cn(
                           "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors",
-                          pagination.page === p ? "bg-[#5E54F7] text-white shadow-md shadow-[#5E54F7]/20" : "bg-white border border-[#e5e7eb] text-[#6b7280] hover:bg-gray-50"
+                          pagination.page === p ? "bg-[#FFB800] text-slate-950 font-bold shadow-md shadow-[#FFB800]/20" : "bg-white border border-[#e5e7eb] text-[#6b7280] hover:bg-gray-50"
                         )}
                       >
                         {p}

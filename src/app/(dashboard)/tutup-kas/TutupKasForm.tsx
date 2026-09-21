@@ -17,9 +17,10 @@ interface TutupKasFormProps {
     openingBalance: number
     totalSales: number
   } | null
+  isReadOnly?: boolean
 }
 
-export function TutupKasForm({ activeRegister }: TutupKasFormProps) {
+export function TutupKasForm({ activeRegister, isReadOnly = false }: TutupKasFormProps) {
   const [actualCash, setActualCash] = useState("")
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
@@ -97,6 +98,13 @@ export function TutupKasForm({ activeRegister }: TutupKasFormProps) {
           <p className="text-sm text-[#6b7280]">Rekapitulasi penjualan dan hitung saldo akhir fisik.</p>
         </div>
 
+        {isReadOnly && (
+          <div className="flex items-center gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+            <AlertCircle size={16} className="text-amber-600 shrink-0" />
+            <span>Mode Read-Only (Akses Admin): Anda hanya dapat melihat rekapitulasi kas. Penutupan kas shift hanya dapat diselesaikan oleh Kasir.</span>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 bg-[#f9fafb] rounded-xl border border-[#e5e7eb]">
             <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider mb-1">Modal Awal</p>
@@ -104,7 +112,7 @@ export function TutupKasForm({ activeRegister }: TutupKasFormProps) {
           </div>
           <div className="p-4 bg-[#f9fafb] rounded-xl border border-[#e5e7eb]">
             <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider mb-1">Total Penjualan</p>
-            <p className="text-lg font-bold text-[#3b82f6]">+{formatCurrency(activeRegister.totalSales)}</p>
+            <p className="text-lg font-bold text-[#FFB800]">+{formatCurrency(activeRegister.totalSales)}</p>
           </div>
         </div>
 
@@ -130,11 +138,12 @@ export function TutupKasForm({ activeRegister }: TutupKasFormProps) {
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#9ca3af]">Rp</span>
               <Input
                 required
+                disabled={isReadOnly}
                 type="text"
                 value={actualCash}
                 onChange={(e) => setActualCash(formatRupiahInput(e.target.value))}
                 placeholder="0"
-                className="pl-10 h-12 text-xl font-bold border-[#e5e7eb] bg-[#f9fafb] focus:bg-white focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10 rounded-lg transition-all"
+                className="pl-10 h-12 text-xl font-bold border-[#e5e7eb] bg-[#f9fafb] focus:bg-white focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10 rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -142,10 +151,11 @@ export function TutupKasForm({ activeRegister }: TutupKasFormProps) {
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider">Catatan Tutup Kas</Label>
             <Textarea
+              disabled={isReadOnly}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Tambahkan alasan jika ada selisih saldo..."
-              className="min-h-[80px] rounded-lg border-[#e5e7eb] bg-white focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10 transition-all text-sm"
+              className="min-h-[80px] rounded-lg border-[#e5e7eb] bg-white focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10 transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -166,10 +176,10 @@ export function TutupKasForm({ activeRegister }: TutupKasFormProps) {
               BATAL
             </Button>
             <Button 
-              disabled={loading}
-              className="flex-[2] h-11 bg-[#ef4444] hover:bg-black text-white font-semibold rounded-lg shadow-sm transition-all active:scale-[0.98]"
+              disabled={loading || isReadOnly}
+              className="flex-[2] h-11 bg-[#ef4444] hover:bg-black text-white font-semibold rounded-lg shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "MEMPROSES..." : "TUTUP KAS & SELESAIKAN"}
+              {isReadOnly ? "MODE READ-ONLY (ADMIN)" : loading ? "MEMPROSES..." : "TUTUP KAS & SELESAIKAN"}
             </Button>
           </div>
         </form>

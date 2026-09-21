@@ -8,7 +8,8 @@ export async function createLog(
   entityId?: string, 
   details?: string,
   oldValue?: any,
-  newValue?: any
+  newValue?: any,
+  outletIdOverride?: string | null
 ) {
   try {
     const headerList = await headers();
@@ -17,9 +18,14 @@ export async function createLog(
     })
     if (!session?.user?.id) return
 
+    const outletId = outletIdOverride !== undefined 
+      ? outletIdOverride 
+      : ((session.user as any).outletId || null)
+
     await prisma.auditLog.create({
       data: {
         userId: session.user.id,
+        outletId: outletId,
         action,
         entity,
         entityId,
@@ -32,4 +38,3 @@ export async function createLog(
     console.error("Failed to create audit log:", error)
   }
 }
-

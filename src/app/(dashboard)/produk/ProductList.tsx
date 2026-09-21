@@ -167,7 +167,7 @@ export function ProductList({
         </div>
         <Button 
           onClick={handleAdd}
-          className="bg-[#5E54F7] hover:bg-[#4b43c6] text-white h-11 px-5 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-[#5E54F7]/20 active:scale-[0.98]"
+          className="bg-[#FFB800] hover:bg-[#e6a600] text-slate-950 font-bold h-11 px-5 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-[#FFB800]/20 active:scale-[0.98]"
         >
           <Plus size={18} />
           <span className="text-sm font-semibold">Tambah Produk</span>
@@ -206,12 +206,12 @@ export function ProductList({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="rounded-lg border-[#e5e7eb]">
-                <DropdownMenuItem onClick={() => setFilterCategory("all")} className={cn(filterCategory === "all" && "bg-[#5E54F7] text-white focus:bg-[#5E54F7] focus:text-white")}>
+                <DropdownMenuItem onClick={() => setFilterCategory("all")} className={cn(filterCategory === "all" && "bg-[#FFB800] text-slate-950 font-bold focus:bg-[#FFB800] focus:text-slate-950")}>
                   Semua Kategori
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {categories.map(cat => (
-                  <DropdownMenuItem key={cat.id} onClick={() => setFilterCategory(cat.id)} className={cn(filterCategory === cat.id && "bg-[#5E54F7] text-white focus:bg-[#5E54F7] focus:text-white")}>
+                  <DropdownMenuItem key={cat.id} onClick={() => setFilterCategory(cat.id)} className={cn(filterCategory === cat.id && "bg-[#FFB800] text-slate-950 font-bold focus:bg-[#FFB800] focus:text-slate-950")}>
                     {cat.name}
                   </DropdownMenuItem>
                 ))}
@@ -230,7 +230,7 @@ export function ProductList({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="rounded-lg border-[#e5e7eb]">
-                <DropdownMenuItem onClick={() => setFilterStatus("all")} className={cn(filterStatus === "all" && "bg-[#5E54F7] text-white focus:bg-[#5E54F7] focus:text-white")}>
+                <DropdownMenuItem onClick={() => setFilterStatus("all")} className={cn(filterStatus === "all" && "bg-[#FFB800] text-slate-950 font-bold focus:bg-[#FFB800] focus:text-slate-950")}>
                   Semua Status
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -276,7 +276,7 @@ export function ProductList({
                     )}
                   >
                     <TableCell>
-                      <code className="text-xs font-mono font-medium text-[#3b82f6] bg-blue-50/50 px-1.5 py-0.5 rounded border border-blue-100/50">
+                      <code className="text-xs font-mono font-medium text-[#FFB800] bg-[#FFB800]/10 px-1.5 py-0.5 rounded border border-[#FFB800]/20">
                         {product.sku}
                       </code>
                     </TableCell>
@@ -368,7 +368,7 @@ export function ProductList({
                         href={`/produk?page=${p}`}
                         className={cn(
                           "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors",
-                          pagination.page === p ? "bg-[#5E54F7] text-white shadow-md shadow-[#5E54F7]/20" : "bg-white border border-[#e5e7eb] text-[#6b7280] hover:bg-gray-50"
+                          pagination.page === p ? "bg-[#FFB800] text-slate-950 font-bold shadow-md shadow-[#FFB800]/20" : "bg-white border border-[#e5e7eb] text-[#6b7280] hover:bg-gray-50"
                         )}
                       >
                         {p}

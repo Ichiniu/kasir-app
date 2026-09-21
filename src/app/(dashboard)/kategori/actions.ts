@@ -3,8 +3,10 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { createLog } from "@/lib/audit"
+import { getSessionUser } from "@/lib/session"
 
 export async function upsertCategory(data: { id?: string; name: string; description?: string }) {
+  const { outletId, isSuperAdmin } = await getSessionUser()
   const { id, name, description } = data
 
   const trimmedName = name.trim()
@@ -17,9 +19,14 @@ export async function upsertCategory(data: { id?: string; name: string; descript
   let category: any
 
   if (id) {
-    const oldCategory = await prisma.category.findUnique({
-      where: { id },
+    // Enforce ownership: only allow updating category belonging to user's outlet (unless SUPERADMIN)
+    const oldCategory = await prisma.category.findFirst({
+      where: isSuperAdmin ? { id } : { id, outletId: outletId! },
     })
+
+    if (!oldCategory) {
+      throw new Error("Kategori tidak ditemukan atau Anda tidak memiliki akses")
+    }
 
     category = await prisma.category.update({
       where: { id },
@@ -35,13 +42,19 @@ export async function upsertCategory(data: { id?: string; name: string; descript
       category.id,
       `Memperbarui kategori: ${oldCategory?.name} → ${category.name}`,
       oldCategory,
-      category
+      category,
+      category.outletId
     )
   } else {
+    if (!outletId && !isSuperAdmin) {
+      throw new Error("Pengguna tidak terhubung dengan outlet")
+    }
+
     category = await prisma.category.create({
       data: {
         name: trimmedName,
         description: trimmedDesc,
+        outletId: outletId!,
       },
     })
 
@@ -51,7 +64,8 @@ export async function upsertCategory(data: { id?: string; name: string; descript
       category.id,
       `Menambah kategori baru: ${category.name}`,
       null,
-      category
+      category,
+      category.outletId
     )
   }
 
@@ -61,9 +75,21 @@ export async function upsertCategory(data: { id?: string; name: string; descript
 }
 
 export async function deleteCategory(id: string) {
-  // Check if any product is using this category
+  const { outletId, isSuperAdmin } = await getSessionUser()
+
+  const category = await prisma.category.findFirst({
+    where: isSuperAdmin ? { id } : { id, outletId: outletId! },
+  })
+
+  if (!category) {
+    throw new Error("Kategori tidak ditemukan atau Anda tidak memiliki akses")
+  }
+
+  // Check if any product is using this category within the outlet
   const productCount = await prisma.product.count({
-    where: { categoryId: id },
+    where: isSuperAdmin 
+      ? { categoryId: id } 
+      : { categoryId: id, outletId: outletId! },
   })
 
   if (productCount > 0) {
@@ -71,10 +97,6 @@ export async function deleteCategory(id: string) {
       `Tidak dapat menghapus kategori ini karena masih digunakan oleh ${productCount} produk.`
     )
   }
-
-  const category = await prisma.category.findUnique({
-    where: { id },
-  })
 
   await prisma.category.delete({
     where: { id },
@@ -84,9 +106,10 @@ export async function deleteCategory(id: string) {
     "DELETE_CATEGORY",
     "CATEGORY",
     id,
-    `Menghapus kategori: ${category?.name || id}`,
+    `Menghapus kategori: ${category.name || id}`,
     category,
-    null
+    null,
+    category.outletId
   )
 
   revalidatePath("/kategori")

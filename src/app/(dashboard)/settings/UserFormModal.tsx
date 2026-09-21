@@ -1,29 +1,47 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createUser, updateUser } from "./actions"
-import { User, Mail, Lock, Shield } from "lucide-react"
+import { User, Mail, Lock, Shield, Store, Plus, Eye, EyeOff } from "lucide-react"
+import { OutletFormModal } from "./OutletFormModal"
 
 interface UserFormModalProps {
   isOpen: boolean
   onClose: () => void
   user?: any
+  outlets?: any[]
+  currentRole?: string
+  currentOutletId?: string | null
+  onOutletCreated?: (newOutlet: any) => void
 }
 
-export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
+export function UserFormModal({
+  isOpen,
+  onClose,
+  user,
+  outlets = [],
+  currentRole = "ADMIN",
+  currentOutletId = null,
+  onOutletCreated
+}: UserFormModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    role: "CASHIER"
+    role: "CASHIER",
+    outletId: ""
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [isAddOutletOpen, setIsAddOutletOpen] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  const isSuperAdmin = currentRole === "SUPERADMIN"
 
   useEffect(() => {
     if (user) {
@@ -31,18 +49,21 @@ export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
         name: user.name,
         email: user.email,
         password: "",
-        role: user.role
+        role: user.role,
+        outletId: user.outletId || ""
       })
     } else {
       setFormData({
         name: "",
         email: "",
         password: "",
-        role: "CASHIER"
+        role: "CASHIER",
+        outletId: currentOutletId || (outlets.length > 0 ? outlets[0].id : "")
       })
     }
     setError("")
-  }, [user, isOpen])
+    setShowPassword(false)
+  }, [user, isOpen, outlets, currentOutletId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,20 +85,30 @@ export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
       return
     }
 
+    if (formData.role !== "SUPERADMIN" && !formData.outletId) {
+      setError("Outlet wajib dipilih untuk akun ini")
+      return
+    }
+
     setLoading(true)
+
+    const payload = {
+      ...formData,
+      outletId: formData.role === "SUPERADMIN" ? null : formData.outletId
+    }
 
     let result
     if (user) {
-      result = await updateUser(user.id, formData)
+      result = await updateUser(user.id, payload)
     } else {
-      result = await createUser(formData)
+      result = await createUser(payload)
     }
 
     setLoading(false)
 
     if (result.success) {
       onClose()
-      setFormData({ name: "", email: "", password: "", role: "CASHIER" })
+      setFormData({ name: "", email: "", password: "", role: "CASHIER", outletId: "" })
     } else {
       setError(result.error || "Terjadi kesalahan")
     }
@@ -85,13 +116,13 @@ export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[400px] rounded-2xl border border-[#e5e7eb] shadow-2xl p-0 overflow-hidden bg-white flex flex-col max-h-[95vh] gap-0">
+      <DialogContent className="sm:max-w-[420px] rounded-2xl border border-[#e5e7eb] shadow-2xl p-0 overflow-hidden bg-white flex flex-col max-h-[95vh] gap-0">
         <div className="p-5 border-b border-[#e5e7eb] bg-[#f9fafb] shrink-0">
           <DialogTitle className="text-lg font-bold text-[#111827] tracking-tight flex items-center gap-2">
             <User size={20} className="text-[#111827]" />
             {user ? "Perbarui Akun Pengguna" : "Daftarkan Akun Baru"}
           </DialogTitle>
-          <p className="text-[11px] font-medium text-[#6b7280] mt-0.5">Lengkapi kredensial akses untuk personel toko.</p>
+          <p className="text-[11px] font-medium text-[#6b7280] mt-0.5">Lengkapi kredensial akses dan penugasan outlet personel.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto custom-scrollbar">
@@ -140,12 +171,20 @@ export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder={user ? "••••••••" : "Min. 6 karakter kreatif"}
-                className="h-10 pl-10 rounded-lg border-[#e5e7eb] bg-white focus:ring-2 focus:ring-[#111827]/10 focus:border-[#111827] text-xs font-semibold"
+                className="h-10 pl-10 pr-10 rounded-lg border-[#e5e7eb] bg-white focus:ring-2 focus:ring-[#111827]/10 focus:border-[#111827] text-xs font-semibold"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#111827] focus:outline-none transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 
@@ -164,10 +203,18 @@ export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-lg border-[#e5e7eb]">
+                  {isSuperAdmin && (
+                    <SelectItem value="SUPERADMIN" className="text-xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-purple-600">SUPERADMIN</span>
+                        <span className="text-[10px] text-[#9ca3af] tracking-tight">(Akses Seluruh Outlet)</span>
+                      </div>
+                    </SelectItem>
+                  )}
                   <SelectItem value="ADMIN" className="text-xs">
                     <div className="flex items-center gap-2">
                       <span className="font-bold">ADMINISTRATOR</span>
-                      <span className="text-[10px] text-[#9ca3af] tracking-tight">(Akses Penuh)</span>
+                      <span className="text-[10px] text-[#9ca3af] tracking-tight">(Akses Penuh Outlet)</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="CASHIER" className="text-xs">
@@ -181,6 +228,48 @@ export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
             </div>
           </div>
 
+          {/* Outlet Field (Dropdown) */}
+          {formData.role !== "SUPERADMIN" && (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="outlet" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
+                  Penugasan Outlet / Cabang
+                </Label>
+                {isSuperAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddOutletOpen(true)}
+                    className="text-[11px] font-bold text-[#FFB800] hover:text-[#d99b00] flex items-center gap-1 transition-colors"
+                  >
+                    <Plus size={12} /> Tambah Cabang Baru
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af] z-10" size={16} />
+                <Select
+                  value={formData.outletId}
+                  onValueChange={(value) => setFormData({ ...formData, outletId: value })}
+                  disabled={!isSuperAdmin && !!currentOutletId}
+                >
+                  <SelectTrigger className="h-10 pl-10 rounded-lg border-[#e5e7eb] bg-white focus:ring-2 focus:ring-[#111827]/10 focus:border-[#111827] text-xs font-semibold">
+                    <SelectValue placeholder="Pilih Cabang Outlet" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-lg border-[#e5e7eb] max-h-56">
+                    {outlets.map((ot) => (
+                      <SelectItem key={ot.id} value={ot.id} className="text-xs">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-[#111827]">{ot.nama}</span>
+                          {ot.alamat && <span className="text-[10px] text-[#9ca3af]">{ot.alamat}</span>}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-100 rounded-lg italic text-[11px] font-medium text-red-600">
@@ -192,10 +281,9 @@ export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
           <div className="flex gap-2 pt-2 border-t border-[#f3f4f6]">
             <Button
               type="button"
-              variant="outline"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 h-10 rounded-lg border-[#e5e7eb] hover:bg-[#f9fafb] text-[10px] font-bold uppercase transition-all"
+              className="flex-1 h-10 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-[10px] font-bold uppercase transition-all shadow-sm"
             >
               Batal
             </Button>
@@ -209,6 +297,18 @@ export function UserFormModal({ isOpen, onClose, user }: UserFormModalProps) {
           </div>
         </form>
       </DialogContent>
+
+      {/* Nested Outlet Form Modal */}
+      <OutletFormModal
+        isOpen={isAddOutletOpen}
+        onClose={() => setIsAddOutletOpen(false)}
+        onSuccess={(newOutlet) => {
+          if (onOutletCreated) {
+            onOutletCreated(newOutlet)
+          }
+          setFormData((prev) => ({ ...prev, outletId: newOutlet.id }))
+        }}
+      />
     </Dialog>
   )
 }

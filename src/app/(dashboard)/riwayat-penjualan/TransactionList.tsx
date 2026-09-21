@@ -228,7 +228,7 @@ export function TransactionList({ initialTransactions }: { initialTransactions: 
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-[#6b7280] uppercase tracking-tighter/wider">Buka Kas</p>
-                            <p className="text-xs font-semibold text-[#3b82f6]">
+                            <p className="text-xs font-semibold text-[#FFB800]">
                               {format(new Date(group.cashRegister.openedAt), "HH:mm", { locale: id })}
                             </p>
                           </div>
@@ -250,7 +250,7 @@ export function TransactionList({ initialTransactions }: { initialTransactions: 
                   className={cn(
                     "text-[10px] font-bold py-0.5 px-2 border-none rounded uppercase",
                     group.cashRegister?.status === "ACTIVE" 
-                      ? "bg-blue-50 text-[#3b82f6]" 
+                      ? "bg-[#FFB800]/15 text-amber-950" 
                       : "bg-gray-100 text-[#6b7280]"
                   )}
                 >

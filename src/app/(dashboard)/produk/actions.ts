@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { createLog } from "@/lib/audit"
+import { getSessionUser } from "@/lib/session"
 
 function parseCurrency(value: string | number): number {
   if (typeof value === "number") return value
@@ -15,6 +16,7 @@ function parseCurrency(value: string | number): number {
 }
 
 export async function upsertProduct(data: any) {
+  const { outletId, isSuperAdmin } = await getSessionUser()
   const { id, categoryId, ...rest } = data
 
   const processedData = {
@@ -28,11 +30,27 @@ export async function upsertProduct(data: any) {
 
   let product: any;
   if (id) {
-    // Fetch old product data before update
-    const oldProduct = await prisma.product.findUnique({
-      where: { id },
+    // Validate ownership before updating
+    const oldProduct = await prisma.product.findFirst({
+      where: isSuperAdmin ? { id } : { id, outletId: outletId! },
       include: { category: true }
     })
+
+    if (!oldProduct) {
+      throw new Error("Produk tidak ditemukan atau Anda tidak memiliki akses")
+    }
+
+    // If changing category, verify category belongs to the same outlet
+    if (processedData.categoryId) {
+      const validCategory = await prisma.category.findFirst({
+        where: isSuperAdmin 
+          ? { id: processedData.categoryId } 
+          : { id: processedData.categoryId, outletId: oldProduct.outletId }
+      })
+      if (!validCategory) {
+        throw new Error("Kategori yang dipilih tidak valid untuk outlet ini")
+      }
+    }
 
     product = await prisma.product.update({
       where: { id },
@@ -77,11 +95,32 @@ export async function upsertProduct(data: any) {
       product.id,
       `Memperbarui produk: ${product.name} (SKU: ${product.sku})${changeDetails ? ' - ' + changeDetails : ''}`,
       oldProduct,
-      product
+      product,
+      product.outletId
     )
   } else {
+    if (!outletId && !isSuperAdmin) {
+      throw new Error("Pengguna tidak terhubung dengan outlet")
+    }
+
+    // Verify category if selected
+    if (processedData.categoryId) {
+      const validCategory = await prisma.category.findFirst({
+        where: isSuperAdmin 
+          ? { id: processedData.categoryId } 
+          : { id: processedData.categoryId, outletId: outletId! }
+      })
+      if (!validCategory) {
+        throw new Error("Kategori yang dipilih tidak valid untuk outlet ini")
+      }
+    }
+
     product = await prisma.product.create({
-      data: processedData,
+      data: {
+        ...processedData,
+        outletId: outletId!,
+      },
+      include: { category: true }
     })
 
     await createLog(
@@ -90,14 +129,26 @@ export async function upsertProduct(data: any) {
       product.id,
       `Menambah produk baru: ${product.name} (SKU: ${product.sku})`,
       null,
-      product
+      product,
+      product.outletId
     )
   }
 
   revalidatePath("/produk")
+  return { success: true, product }
 }
 
 export async function toggleProductStatus(id: string, currentStatus: boolean) {
+  const { outletId, isSuperAdmin } = await getSessionUser()
+
+  const existingProduct = await prisma.product.findFirst({
+    where: isSuperAdmin ? { id } : { id, outletId: outletId! }
+  })
+
+  if (!existingProduct) {
+    throw new Error("Produk tidak ditemukan atau Anda tidak memiliki akses")
+  }
+
   const product = await prisma.product.update({
     where: { id },
     data: { isActive: !currentStatus },
@@ -107,8 +158,12 @@ export async function toggleProductStatus(id: string, currentStatus: boolean) {
     "TOGGLE_PRODUCT_STATUS",
     "PRODUCT",
     product.id,
-    `${!currentStatus ? "Mengaktifkan" : "Menonaktifkan"} produk: ${product.name}`
+    `${!currentStatus ? "Mengaktifkan" : "Menonaktifkan"} produk: ${product.name}`,
+    null,
+    null,
+    product.outletId
   )
 
   revalidatePath("/produk")
+  return { success: true, product }
 }

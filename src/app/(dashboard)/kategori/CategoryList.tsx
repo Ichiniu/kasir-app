@@ -164,7 +164,7 @@ export function CategoryList({ categories }: { categories: CategoryItem[] }) {
         </div>
         <Button
           onClick={handleAdd}
-          className="bg-[#5E54F7] hover:bg-[#4b43c6] text-white h-11 px-5 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-[#5E54F7]/20 active:scale-[0.98]"
+          className="bg-[#FFB800] hover:bg-[#e6a600] text-slate-950 font-bold h-11 px-5 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-[#FFB800]/20 active:scale-[0.98]"
         >
           <Plus size={18} />
           <span className="text-sm font-semibold">Tambah Kategori</span>
@@ -230,7 +230,7 @@ export function CategoryList({ categories }: { categories: CategoryItem[] }) {
                     <TableRow key={cat.id} className="group transition-colors border-b-[#e5e7eb]">
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-[#5E54F7]/10 flex items-center justify-center text-[#5E54F7]">
+                          <div className="w-8 h-8 rounded-lg bg-[#FFB800]/10 flex items-center justify-center text-[#FFB800]">
                             <Tag size={16} />
                           </div>
                           <span className="text-sm font-bold text-[#111827]">{cat.name}</span>
@@ -247,7 +247,7 @@ export function CategoryList({ categories }: { categories: CategoryItem[] }) {
                           className={cn(
                             "font-semibold text-xs px-2.5 py-1 gap-1.5 inline-flex items-center",
                             productCount > 0
-                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              ? "bg-[#FFB800]/10 text-amber-950 border-[#FFB800]/30"
                               : "bg-gray-50 text-gray-500 border-gray-200"
                           )}
                         >

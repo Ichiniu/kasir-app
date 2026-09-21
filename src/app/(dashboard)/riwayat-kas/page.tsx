@@ -1,5 +1,7 @@
 import React from "react"
 import { prisma } from "@/lib/prisma"
+import { getSessionUser } from "@/lib/session"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic";
 import {
@@ -21,13 +23,24 @@ export default async function RiwayatKasPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch {
+    redirect("/login")
+  }
+
+  const { outletId, isSuperAdmin } = sessionUser
   const sp = await searchParams
   const page = typeof sp?.page === "string" ? parseInt(sp.page) : 1
   const limit = 10
   const skip = (page - 1) * limit
 
+  const outletFilter = isSuperAdmin ? {} : { outletId: outletId! }
+
   const [registers, total] = await Promise.all([
     prisma.cashRegister.findMany({
+      where: outletFilter,
       select: {
         id: true,
         openingBalance: true,
@@ -49,7 +62,9 @@ export default async function RiwayatKasPage({
       take: limit,
       skip: skip
     }),
-    prisma.cashRegister.count()
+    prisma.cashRegister.count({
+      where: outletFilter
+    })
   ])
 
   const totalPages = Math.ceil(total / limit)
@@ -139,7 +154,7 @@ export default async function RiwayatKasPage({
                       <TableCell className="px-6 py-4">
                         <Badge variant="outline" className={cn(
                           "text-[10px] font-bold py-0 px-2 border-none rounded uppercase",
-                          reg.status === "OPEN" ? "bg-blue-50 text-[#3b82f6]" : "bg-gray-100 text-[#6b7280]"
+                          reg.status === "OPEN" ? "bg-[#FFB800]/15 text-amber-950 font-bold" : "bg-gray-100 text-[#6b7280]"
                         )}>
                           {reg.status}
                         </Badge>

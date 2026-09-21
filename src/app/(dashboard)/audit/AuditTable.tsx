@@ -27,7 +27,7 @@ export function AuditTable({ logs }: AuditTableProps) {
   const getActionBadgeColor = (action: string) => {
     if (action.includes("CREATE")) return "text-emerald-600 bg-emerald-50 border-emerald-100"
     if (action.includes("DELETE")) return "text-red-600 bg-red-50 border-red-100"
-    if (action.includes("UPDATE")) return "text-blue-600 bg-blue-50 border-blue-100"
+    if (action.includes("UPDATE")) return "text-amber-950 font-semibold bg-[#FFB800]/20 border-[#FFB800]/30"
     if (action.includes("LOGIN")) return "text-purple-600 bg-purple-50 border-purple-100"
     if (action.includes("CLOSE")) return "text-orange-600 bg-orange-50 border-orange-100"
     return "text-[#6b7280] bg-[#f9fafb] border-[#e5e7eb]"

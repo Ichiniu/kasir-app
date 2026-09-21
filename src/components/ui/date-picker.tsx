@@ -27,6 +27,28 @@ export function DatePicker({
   placeholder = "Pilih tanggal",
   className 
 }: DatePickerProps) {
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        disabled
+        className={cn(
+          "inline-flex items-center justify-start gap-2 h-10 px-3 rounded-md border border-input bg-background text-sm font-normal text-muted-foreground w-full",
+          className
+        )}
+      >
+        <CalendarIcon className="h-4 w-4" />
+        <span>{placeholder}</span>
+      </button>
+    )
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>

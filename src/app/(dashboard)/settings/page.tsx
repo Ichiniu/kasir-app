@@ -1,46 +1,74 @@
 import React from "react"
 import { prisma } from "@/lib/prisma"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getSessionUser } from "@/lib/session"
 import { redirect } from "next/navigation"
 import { Settings as SettingsIcon } from "lucide-react"
 import { UserList } from "./UserList"
 
+export const dynamic = "force-dynamic"
+
 export default async function SettingsPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch {
+    redirect("/login")
+  }
+
+  const { role, outletId, isSuperAdmin } = sessionUser
   
-  if (!session || session.user.role !== "ADMIN") {
+  if (role !== "SUPERADMIN") {
     redirect("/dashboard")
   }
 
-  const users = await prisma.user.findMany({
-    orderBy: {
-      createdAt: "desc"
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true,
-    }
-  })
+  const [users, outlets] = await Promise.all([
+    prisma.user.findMany({
+      where: isSuperAdmin ? {} : { outletId: outletId! },
+      orderBy: {
+        createdAt: "desc"
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        outletId: true,
+        outlet: {
+          select: {
+            id: true,
+            nama: true,
+          }
+        },
+        createdAt: true,
+        updatedAt: true,
+      }
+    }),
+    prisma.outlet.findMany({
+      orderBy: {
+        nama: "asc"
+      },
+      select: {
+        id: true,
+        nama: true,
+        alamat: true,
+      }
+    })
+  ])
 
   return (
     <div className="p-8 space-y-8 bg-[#f8fafc] min-h-screen">
       <div className="flex justify-between items-end">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <SettingsIcon size={20} className="text-blue-600" />
-            <span className="text-xs font-black text-blue-600 uppercase tracking-widest">System Configuration</span>
+            <SettingsIcon size={20} className="text-[#FFB800]" />
+            <span className="text-xs font-black text-[#FFB800] uppercase tracking-widest">System Configuration</span>
           </div>
-          <h1 className="text-3xl font-bold text-[#0f172a] tracking-tight">Pengaturan Akun</h1>
-          <p className="text-[#64748b] mt-1">Kelola akun Admin dan Kasir untuk sistem POS.</p>
+          <h1 className="text-3xl font-bold text-[#0f172a] tracking-tight">Pengaturan Akun & Outlet</h1>
+          <p className="text-[#64748b] mt-1">Kelola akun Superadmin, Admin, dan Kasir beserta penugasan outlet.</p>
         </div>
       </div>
 
-      <UserList users={users} />
+      <UserList users={users} outlets={outlets} currentRole={role} currentOutletId={outletId} />
     </div>
   )
 }

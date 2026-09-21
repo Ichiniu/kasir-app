@@ -1,6 +1,14 @@
 // Common TypeScript Types for the application
 
-export type UserRole = 'ADMIN' | 'CASHIER'
+export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'CASHIER'
+
+export interface Outlet {
+  id: string
+  nama: string
+  alamat?: string | null
+  createdAt: Date
+  updatedAt: Date
+}
 
 export interface User {
   id: string
@@ -8,12 +16,15 @@ export interface User {
   name: string
   role: UserRole
   isActive: boolean
+  outletId?: string | null
+  outlet?: Outlet | null
   createdAt: Date
   updatedAt: Date
 }
 
 export interface Category {
   id: string
+  outletId: string
   name: string
   description?: string
   createdAt: Date
@@ -22,6 +33,7 @@ export interface Category {
 
 export interface Product {
   id: string
+  outletId: string
   sku: string
   name: string
   description?: string
@@ -49,6 +61,7 @@ export type PaymentStatus =
 
 export interface Transaction {
   id: string
+  outletId: string
   invoiceNumber: string
   totalAmount: number
   discountAmount: number
@@ -68,6 +81,7 @@ export interface Transaction {
 
 export interface TransactionItem {
   id: string
+  outletId: string
   transactionId: string
   productId: string
   productName: string

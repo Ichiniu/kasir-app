@@ -46,7 +46,7 @@ export const LOW_STOCK_THRESHOLD = 5
 
 // Chart Colors
 export const CHART_COLORS = {
-  primary: '#3b82f6',
+  primary: '#FFB800',
   success: '#10b981',
   warning: '#f59e0b',
   danger: '#ef4444',

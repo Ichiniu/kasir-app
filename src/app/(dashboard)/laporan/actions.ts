@@ -1,21 +1,25 @@
 "use server"
 
 import { prisma } from "@/lib/prisma"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { eachDayOfInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, isSameDay, eachHourOfInterval, setHours, endOfHour, startOfHour } from "date-fns"
+import { getSessionUser } from "@/lib/session"
+import { eachDayOfInterval, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, isSameDay, eachHourOfInterval, endOfHour, startOfHour } from "date-fns"
 import { id as localeId } from "date-fns/locale"
 
 export async function getReportData(
   type: "daily" | "weekly" | "monthly", 
   date: Date = new Date(),
-  range?: { start: Date; end: Date }
+  range?: { start: Date; end: Date },
+  filterOutletId?: string
 ) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session) {
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch {
     redirect("/login")
   }
+
+  const { outletId, isSuperAdmin } = sessionUser
 
   let start: Date
   let end: Date
@@ -34,8 +38,12 @@ export async function getReportData(
     end = endOfMonth(date)
   }
 
+  // Determine effective outlet filter
+  const targetOutlet = isSuperAdmin ? (filterOutletId || undefined) : outletId || undefined
+
   const transactions = await prisma.transaction.findMany({
     where: {
+      ...(targetOutlet ? { outletId: targetOutlet } : {}),
       createdAt: {
         gte: start,
         lte: end

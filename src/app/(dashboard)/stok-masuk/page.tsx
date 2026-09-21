@@ -1,24 +1,36 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/session";
+import { redirect } from "next/navigation";
+import { StockInList } from "./StockInList";
 
 export const dynamic = "force-dynamic";
-
-import { StockInList } from "./StockInList";
 
 export default async function StokMasukPage({
   searchParams,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch {
+    redirect("/login")
+  }
+
+  const { outletId, isSuperAdmin } = sessionUser
   const sp = await searchParams
   const page = typeof sp?.page === "string" ? parseInt(sp.page) : 1
   const limit = 10
   const skip = (page - 1) * limit
 
+  const outletFilter = isSuperAdmin ? {} : { outletId: outletId! }
+
   const [adjustments, total, products] = await Promise.all([
     prisma.inventoryAdjustment.findMany({
       where: {
-        type: "IN"
+        type: "IN",
+        ...outletFilter,
       },
       include: {
         product: true
@@ -30,9 +42,13 @@ export default async function StokMasukPage({
       skip: skip
     }),
     prisma.inventoryAdjustment.count({
-      where: { type: "IN" }
+      where: { 
+        type: "IN",
+        ...outletFilter,
+      }
     }),
     prisma.product.findMany({
+      where: outletFilter,
       orderBy: {
         name: "asc"
       }

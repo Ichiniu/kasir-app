@@ -40,7 +40,7 @@ export function ModernDropdownDemo() {
         <DropdownMenuTrigger asChild>
           <Button 
             variant="outline"
-            className="h-12 px-4 rounded-2xl border-[#e2e8f0] bg-[#f8fafc] hover:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+            className="h-12 px-4 rounded-2xl border-[#e2e8f0] bg-[#f8fafc] hover:bg-white focus:ring-4 focus:ring-[#FFB800]/20 focus:border-[#FFB800] transition-all"
           >
             <UserIcon size={18} className="text-[#94a3b8] mr-2" />
             <span className="text-sm font-bold text-[#0f172a]">
@@ -53,7 +53,7 @@ export function ModernDropdownDemo() {
           <DropdownMenuItem
             onClick={() => setSelected("profile")}
             className={cn(
-              selected === "profile" && "bg-blue-600 text-white hover:bg-blue-700 [&_svg]:text-white"
+              selected === "profile" && "bg-[#FFB800] text-slate-950 hover:bg-[#e6a600] [&_svg]:text-slate-950"
             )}
           >
             <UserIcon />
@@ -62,7 +62,7 @@ export function ModernDropdownDemo() {
           <DropdownMenuItem
             onClick={() => setSelected("billing")}
             className={cn(
-              selected === "billing" && "bg-blue-600 text-white hover:bg-blue-700 [&_svg]:text-white"
+              selected === "billing" && "bg-[#FFB800] text-slate-950 hover:bg-[#e6a600] [&_svg]:text-slate-950"
             )}
           >
             <CreditCardIcon />
@@ -71,7 +71,7 @@ export function ModernDropdownDemo() {
           <DropdownMenuItem
             onClick={() => setSelected("settings")}
             className={cn(
-              selected === "settings" && "bg-blue-600 text-white hover:bg-blue-700 [&_svg]:text-white"
+              selected === "settings" && "bg-[#FFB800] text-slate-950 hover:bg-[#e6a600] [&_svg]:text-slate-950"
             )}
           >
             <SettingsIcon />

@@ -1,5 +1,5 @@
 // This is your Prisma schema file,
-//learn more about it in the docs: https://pris.ly/d/prisma-schema
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -10,25 +10,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Outlet Model - Untuk sistem Multi-Tenant (Multi-Outlet)
+model Outlet {
+  id        String   @id @default(cuid())
+  nama      String
+  alamat    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                User[]
+  categories           Category[]
+  products             Product[]
+  transactions         Transaction[]
+  transactionItems     TransactionItem[]
+  inventoryAdjustments InventoryAdjustment[]
+  cashRegisters        CashRegister[]
+  auditLogs            AuditLog[]
+
+  @@map("outlets")
+}
+
 // User Model - Untuk authentication dan role management
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
+  id            String    @id @default(cuid())
+  email         String    @unique
   name          String
   emailVerified Boolean?
   image         String?
   password      String?
-  role          UserRole @default(CASHIER)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  role          UserRole  @default(CASHIER)
+  isActive      Boolean   @default(true)
+  outletId      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
+  outlet        Outlet?   @relation(fields: [outletId], references: [id])
   transactions  Transaction[]
   cashRegisters CashRegister[]
   auditLogs     AuditLog[]
   sessions      Session[]
   accounts      Account[]
 
+  @@index([outletId])
   @@map("users")
 }
 
@@ -79,6 +102,7 @@ model Verification {
 // Audit Log - Mencatat semua aktivitas penting
 model AuditLog {
   id        String   @id @default(cuid())
+  outletId  String?
   userId    String
   action    String   // LOGIN, LOGOUT, CREATE_TRANSACTION, UPDATE_STOCK, etc.
   entity    String?  // TRANSACTION, PRODUCT, CASH_REGISTER, etc.
@@ -89,8 +113,10 @@ model AuditLog {
   ipAddress String?
   createdAt DateTime @default(now())
 
+  outlet    Outlet?  @relation(fields: [outletId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 
+  @@index([outletId])
   @@index([userId])
   @@index([action])
   @@index([createdAt])
@@ -98,6 +124,7 @@ model AuditLog {
 }
 
 enum UserRole {
+  SUPERADMIN
   ADMIN
   CASHIER
 }
@@ -105,20 +132,24 @@ enum UserRole {
 // Category Model - Kategori produk
 model Category {
   id          String    @id @default(cuid())
+  outletId    String
   name        String
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  outlet   Outlet    @relation(fields: [outletId], references: [id])
   products Product[]
 
+  @@index([outletId])
   @@map("categories")
 }
 
 // Product Model - Produk yang dijual
 model Product {
   id          String   @id @default(cuid())
-  sku         String   @unique
+  outletId    String
+  sku         String
   name        String
   description String?  @db.Text
   price       Decimal  @db.Decimal(10, 2)
@@ -132,10 +163,13 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  outlet               Outlet                @relation(fields: [outletId], references: [id])
   category             Category?             @relation(fields: [categoryId], references: [id])
   transactionItems     TransactionItem[]
   inventoryAdjustments InventoryAdjustment[]
 
+  @@unique([outletId, sku])
+  @@index([outletId])
   @@index([categoryId])
   @@index([sku])
   @@map("products")
@@ -144,6 +178,7 @@ model Product {
 // Transaction Model - Transaksi penjualan
 model Transaction {
   id              String            @id @default(cuid())
+  outletId        String
   invoiceNumber   String            @unique
   totalAmount     Decimal           @db.Decimal(10, 2)
   discountAmount  Decimal           @default(0) @db.Decimal(10, 2)
@@ -159,11 +194,13 @@ model Transaction {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
+  outlet           Outlet             @relation(fields: [outletId], references: [id])
   user             User               @relation(fields: [userId], references: [id])
   transactionItems TransactionItem[]
   cashRegisterId   String?
   cashRegister     CashRegister?      @relation(fields: [cashRegisterId], references: [id])
 
+  @@index([outletId])
   @@index([userId])
   @@index([invoiceNumber])
   @@index([cashRegisterId])
@@ -174,6 +211,7 @@ model Transaction {
 // Cash Register - Untuk Buka/Tutup Kas
 model CashRegister {
   id              String         @id @default(cuid())
+  outletId        String
   userId          String
   openingBalance  Decimal        @db.Decimal(10, 2)
   closingBalance  Decimal?       @db.Decimal(10, 2)
@@ -185,9 +223,11 @@ model CashRegister {
   openedAt        DateTime       @default(now())
   closedAt        DateTime?
 
+  outlet          Outlet         @relation(fields: [outletId], references: [id])
   user            User           @relation(fields: [userId], references: [id])
   transactions    Transaction[]
 
+  @@index([outletId])
   @@index([userId])
   @@index([status])
   @@map("cash_registers")
@@ -217,6 +257,7 @@ enum PaymentStatus {
 // TransactionItem Model - Item dalam transaksi
 model TransactionItem {
   id            String   @id @default(cuid())
+  outletId      String
   transactionId String
   productId     String
   productName   String // Simpan nama produk saat transaksi untuk history
@@ -225,9 +266,11 @@ model TransactionItem {
   subtotal      Decimal  @db.Decimal(10, 2)
   createdAt     DateTime @default(now())
 
+  outlet      Outlet      @relation(fields: [outletId], references: [id])
   transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   product     Product     @relation(fields: [productId], references: [id])
 
+  @@index([outletId])
   @@index([transactionId])
   @@index([productId])
   @@map("transaction_items")
@@ -236,6 +279,7 @@ model TransactionItem {
 // Stock Adjustment - Untuk stok masuk/keluar
 model InventoryAdjustment {
   id        String                 @id @default(cuid())
+  outletId  String
   productId String
   type      StockAdjustmentType    @default(IN)
   quantity  Int
@@ -244,8 +288,10 @@ model InventoryAdjustment {
   notes     String?                @db.Text
   createdAt DateTime               @default(now())
 
+  outlet    Outlet                 @relation(fields: [outletId], references: [id])
   product   Product                @relation(fields: [productId], references: [id])
 
+  @@index([outletId])
   @@index([productId])
   @@map("inventory_adjustments")
 }

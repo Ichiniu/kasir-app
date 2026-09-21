@@ -1,11 +1,23 @@
 import React from "react"
 import { prisma } from "@/lib/prisma"
 import { TransactionList } from "./TransactionList"
+import { getSessionUser } from "@/lib/session"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic";
 
 export default async function RiwayatPenjualanPage() {
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch {
+    redirect("/login")
+  }
+
+  const { outletId, isSuperAdmin } = sessionUser
+
   const transactions = await prisma.transaction.findMany({
+    where: isSuperAdmin ? {} : { outletId: outletId! },
     include: {
       user: {
         select: {
@@ -60,12 +72,12 @@ export default async function RiwayatPenjualanPage() {
       ...item,
       price: Number(item.price),
       subtotal: Number(item.subtotal),
-      createdAt: item.createdAt.toISOString()
+      createdAt: item.createdAt.toISOString(),
     }))
   }))
 
   return (
-    <div className="p-6 bg-white min-h-screen">
+    <div className="p-8 bg-[#f8fafc] min-h-screen">
       <TransactionList initialTransactions={serializableTransactions} />
     </div>
   )

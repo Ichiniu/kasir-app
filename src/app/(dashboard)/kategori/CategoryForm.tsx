@@ -116,7 +116,7 @@ export function CategoryForm({ open, onOpenChange, category }: CategoryFormProps
             <Button
               type="submit"
               disabled={loading || !name.trim()}
-              className="flex-[1.5] h-10 rounded-lg bg-[#5E54F7] hover:bg-[#4b43c6] text-white text-xs font-bold uppercase transition-all shadow-md shadow-[#5E54F7]/20 active:scale-[0.98]"
+              className="flex-[1.5] h-10 rounded-lg bg-[#FFB800] hover:bg-[#e6a600] text-slate-950 text-xs font-bold uppercase transition-all shadow-md shadow-[#FFB800]/20 active:scale-[0.98]"
             >
               {loading ? "Menyimpan..." : category ? "Update Kategori" : "Simpan Kategori"}
             </Button>

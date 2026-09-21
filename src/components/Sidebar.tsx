@@ -18,6 +18,7 @@ import {
   BarChart3,
   LogOut,
   Settings,
+  Store,
 } from "lucide-react";
 import { signIn, signOut, useSession } from "@/lib/auth-client";
 
@@ -26,7 +27,7 @@ const sidebarItems = [
     title: "Dasbor",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "SUPERADMIN"],
   },
   {
     section: "PRODUK & INVENTORI",
@@ -59,7 +60,6 @@ const sidebarItems = [
     items: [
       { title: "Riwayat Buka/Tutup Kas", href: "/riwayat-kas", icon: History },
       { title: "Audit Aktivitas", href: "/audit", icon: ClipboardList },
-      { title: "Pengaturan Akun", href: "/settings", icon: Settings },
     ],
   },
   {
@@ -69,6 +69,14 @@ const sidebarItems = [
       { title: "Laporan Harian", href: "/laporan/harian", icon: BarChart3 },
       { title: "Laporan Mingguan", href: "/laporan/mingguan", icon: BarChart3 },
       { title: "Laporan Bulanan", href: "/laporan/bulanan", icon: BarChart3 },
+    ],
+  },
+  {
+    section: "PENGATURAN",
+    roles: ["SUPERADMIN"],
+    items: [
+      { title: "Kelola Cabang", href: "/cabang", icon: Store },
+      { title: "Pengaturan Akun", href: "/settings", icon: Settings },
     ],
   },
 ];
@@ -82,7 +90,10 @@ export function Sidebar() {
     setMounted(true);
   }, []);
 
-  const userRole = mounted && (session?.user as any)?.role ? ((session?.user as any)?.role as string) : "CASHIER";
+  const userRole = mounted ? (((session?.user as any)?.role as string) || "CASHIER") : "";
+
+  // Belum mounted: render kosong agar tidak flash menu yang salah
+  if (!mounted) return null;
 
   const filteredItems = sidebarItems.filter(item => {
     if (item.roles && !item.roles.includes(userRole)) return false;
@@ -155,13 +166,13 @@ function SidebarLink({
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200",
         active
-          ? "text-white bg-[#5E54F7] shadow-lg shadow-[#5E54F7]/20"
-          : "text-[#6b7280] hover:text-[#5E54F7] hover:bg-[#5E54F7]/5"
+          ? "text-slate-950 font-bold bg-[#FFB800] shadow-md shadow-[#FFB800]/25"
+          : "text-[#6b7280] hover:text-slate-900 hover:bg-[#FFB800]/10"
       )}
     >
       <Icon
         size={18}
-        className={cn("transition-colors", active ? "text-white" : "group-hover:text-[#5E54F7]")}
+        className={cn("transition-colors", active ? "text-slate-950" : "group-hover:text-slate-900")}
       />
       <span>{title}</span>
     </Link>

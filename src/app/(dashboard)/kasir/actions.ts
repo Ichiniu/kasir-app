@@ -3,8 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { createLog } from "@/lib/audit"
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
+import { getSessionUser } from "@/lib/session"
 import { z } from "zod"
 import { PaymentStatus } from "@prisma/client"
 
@@ -29,9 +28,20 @@ const inputSchema = z.object({
 })
 
 export async function createTransaction(rawData: any) {
-  const session = await auth.api.getSession({ headers: await headers() })
-  if (!session || !session.user) {
-    return { success: false, error: "Unauthorized: Harap login terlebih dahulu" }
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch (err: any) {
+    return { success: false, error: err.message || "Unauthorized: Harap login terlebih dahulu" }
+  }
+
+  const { userId, outletId, isSuperAdmin, role } = sessionUser
+  if (role === "ADMIN") {
+    return { success: false, error: "Akses ditolak: Admin hanya memiliki hak akses read-only di kasir." }
+  }
+
+  if (!outletId && !isSuperAdmin) {
+    return { success: false, error: "Pengguna tidak terhubung dengan outlet manapun" }
   }
 
   // Validate Input
@@ -47,6 +57,7 @@ export async function createTransaction(rawData: any) {
   const dateString = date.toISOString().slice(0, 10).replace(/-/g, "")
   const count = await prisma.transaction.count({
     where: {
+      ...(outletId ? { outletId } : {}),
       createdAt: {
         gte: new Date(date.setHours(0, 0, 0, 0)),
         lte: new Date(date.setHours(23, 59, 59, 999))
@@ -58,9 +69,54 @@ export async function createTransaction(rawData: any) {
   // 2. Perform Transaction in a Transaction block
   try {
     const transaction = await prisma.$transaction(async (tx) => {
+      // Determine effective outletId
+      const targetOutletId = outletId || (await tx.outlet.findFirst({ select: { id: true } }))?.id
+      if (!targetOutletId) {
+        throw new Error("Tidak ada data outlet yang tersedia")
+      }
+
+      // If cashRegisterId is passed, verify register belongs to this outlet and user
+      if (data.cashRegisterId) {
+        const register = await tx.cashRegister.findFirst({
+          where: {
+            id: data.cashRegisterId,
+            outletId: targetOutletId,
+            userId: userId,
+            status: "OPEN"
+          }
+        })
+        if (!register) {
+          throw new Error("Sesi kas tidak valid atau sudah ditutup")
+        }
+      }
+
+      // Check and update product stocks (ensuring product belongs to same outlet)
+      for (const item of data.items) {
+        const product = await tx.product.findFirst({
+          where: {
+            id: item.id,
+            outletId: targetOutletId
+          }
+        })
+
+        if (!product || product.stock < item.quantity) {
+          throw new Error(`Stok produk ${item.name} tidak mencukupi atau produk tidak ditemukan di outlet ini. (Sisa: ${product?.stock ?? 0})`)
+        }
+
+        await tx.product.update({
+          where: { id: item.id },
+          data: {
+            stock: {
+              decrement: item.quantity
+            }
+          }
+        })
+      }
+
       // Create the main transaction record
       const newTransaction = await tx.transaction.create({
         data: {
+          outletId: targetOutletId,
           invoiceNumber,
           totalAmount: data.totalAmount,
           discountAmount: data.discountAmount,
@@ -71,10 +127,11 @@ export async function createTransaction(rawData: any) {
           cashReceived: data.cashReceived || null,
           changeAmount: data.changeAmount || null,
           customerName: data.customerName || "Umum",
-          userId: session.user.id, // Securely use session user ID
+          userId: userId,
           cashRegisterId: data.cashRegisterId,
           transactionItems: {
             create: data.items.map((item) => ({
+              outletId: targetOutletId,
               productId: item.id,
               productName: item.name,
               quantity: item.quantity,
@@ -98,26 +155,6 @@ export async function createTransaction(rawData: any) {
         })
       }
 
-      // Update product stocks
-      for (const item of data.items) {
-        const product = await tx.product.findUnique({
-          where: { id: item.id }
-        })
-
-        if (!product || product.stock < item.quantity) {
-          throw new Error(`Stok produk ${item.name} tidak mencukupi atau produk tidak ditemukan. (Sisa: ${product?.stock ?? 0})`)
-        }
-
-        await tx.product.update({
-          where: { id: item.id },
-          data: {
-            stock: {
-              decrement: item.quantity
-            }
-          }
-        })
-      }
-
       return newTransaction
     })
 
@@ -130,7 +167,10 @@ export async function createTransaction(rawData: any) {
       "CREATE_TRANSACTION", 
       "TRANSACTION", 
       transaction.id, 
-      `Penjualan No. ${transaction.invoiceNumber} sebesar Rp ${data.finalAmount.toLocaleString('id-ID')}`
+      `Penjualan No. ${transaction.invoiceNumber} sebesar Rp ${data.finalAmount.toLocaleString('id-ID')}`,
+      null,
+      null,
+      transaction.outletId
     )
 
     // Serialize transaction for client
@@ -160,8 +200,12 @@ export async function createTransaction(rawData: any) {
 }
 
 export async function getProductsForCashier() {
+  const { outletId, isSuperAdmin } = await getSessionUser()
   return await prisma.product.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      ...(isSuperAdmin ? {} : { outletId: outletId! })
+    },
     include: { category: true },
     orderBy: { name: "asc" }
   })

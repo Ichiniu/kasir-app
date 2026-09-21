@@ -10,7 +10,13 @@ import { Wallet, CheckCircle2, AlertCircle } from "lucide-react"
 import { openCashRegister } from "./actions"
 import { useRouter } from "next/navigation"
 
-export function BukaKasForm({ hasActive }: { hasActive: boolean }) {
+export function BukaKasForm({ 
+  hasActive,
+  isReadOnly = false
+}: { 
+  hasActive: boolean
+  isReadOnly?: boolean
+}) {
   const [openingBalance, setOpeningBalance] = useState("")
   const [notes, setNotes] = useState("")
   const [loading, setLoading] = useState(false)
@@ -61,7 +67,7 @@ export function BukaKasForm({ hasActive }: { hasActive: boolean }) {
           </div>
           <Button 
             onClick={() => router.push("/kasir")}
-            className="w-full h-11 bg-[#5E54F7] hover:bg-[#4b43c6] text-white rounded-lg font-semibold transition-all shadow-lg shadow-[#5E54F7]/20 active:scale-[0.98]"
+            className="w-full h-11 bg-[#FFB800] hover:bg-[#e6a600] text-slate-950 font-bold rounded-lg font-semibold transition-all shadow-lg shadow-[#FFB800]/20 active:scale-[0.98]"
           >
             Buka Menu Kasir
           </Button>
@@ -78,6 +84,13 @@ export function BukaKasForm({ hasActive }: { hasActive: boolean }) {
           <p className="text-sm text-[#6b7280] mt-1">Masukkan modal awal uang di laci kasir.</p>
         </div>
 
+        {isReadOnly && (
+          <div className="flex items-center gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+            <AlertCircle size={16} className="text-amber-600 shrink-0" />
+            <span>Mode Read-Only (Akses Admin): Anda hanya dapat melihat formulir ini. Buka kas shift hanya dapat dilakukan oleh Kasir.</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider">Modal Awal (Tunai)</Label>
@@ -85,11 +98,12 @@ export function BukaKasForm({ hasActive }: { hasActive: boolean }) {
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-[#9ca3af]">Rp</span>
               <Input
                 required
+                disabled={isReadOnly}
                 type="text"
                 value={openingBalance}
                 onChange={(e) => setOpeningBalance(formatRupiahInput(e.target.value))}
                 placeholder="0"
-                className="pl-10 h-12 text-xl font-bold border-[#e5e7eb] bg-[#f9fafb] focus:bg-white focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10 rounded-lg transition-all"
+                className="pl-10 h-12 text-xl font-bold border-[#e5e7eb] bg-[#f9fafb] focus:bg-white focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10 rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -97,10 +111,11 @@ export function BukaKasForm({ hasActive }: { hasActive: boolean }) {
           <div className="space-y-1.5">
             <Label className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider">Catatan Opsional</Label>
             <Textarea
+              disabled={isReadOnly}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Tambahkan catatan jika diperlukan..."
-              className="min-h-[80px] rounded-lg border-[#e5e7eb] bg-white focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10 transition-all text-sm"
+              className="min-h-[80px] rounded-lg border-[#e5e7eb] bg-white focus:border-[#111827] focus:ring-2 focus:ring-[#111827]/10 transition-all text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
 
@@ -112,10 +127,10 @@ export function BukaKasForm({ hasActive }: { hasActive: boolean }) {
           )}
 
           <Button 
-            disabled={loading}
-            className="w-full h-11 bg-[#5E54F7] hover:bg-[#4b43c6] text-white font-semibold rounded-lg shadow-lg shadow-[#5E54F7]/20 transition-all active:scale-[0.98]"
+            disabled={loading || isReadOnly}
+            className="w-full h-11 bg-[#FFB800] hover:bg-[#e6a600] text-slate-950 font-bold font-semibold rounded-lg shadow-lg shadow-[#FFB800]/20 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "MEMPROSES..." : "BUKA KAS SEKARANG"}
+            {isReadOnly ? "MODE READ-ONLY (ADMIN)" : loading ? "MEMPROSES..." : "BUKA KAS SEKARANG"}
           </Button>
         </form>
       </Card>

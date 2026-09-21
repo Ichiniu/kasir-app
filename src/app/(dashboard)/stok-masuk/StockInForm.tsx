@@ -159,7 +159,7 @@ export function StockInForm({ open, onOpenChange, products }: StockInFormProps) 
             <div className="space-y-1">
               <Label htmlFor="price" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Harga Jual Baru</Label>
               <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#3b82f6] text-[10px] font-bold">Rp</span>
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#FFB800] text-[10px] font-bold">Rp</span>
                 <Input
                   id="price"
                   type="text"
@@ -167,7 +167,7 @@ export function StockInForm({ open, onOpenChange, products }: StockInFormProps) 
                   onChange={handleCurrencyChange(setPrice)}
                   placeholder="0"
                   required
-                  className="h-10 rounded-lg border-[#e5e7eb] pl-8 bg-white focus:ring-2 focus:ring-[#111827]/10 focus:border-[#111827] text-xs font-bold text-[#3b82f6] transition-all"
+                  className="h-10 rounded-lg border-[#e5e7eb] pl-8 bg-white focus:ring-2 focus:ring-[#111827]/10 focus:border-[#111827] text-xs font-bold text-[#FFB800] transition-all"
                 />
               </div>
             </div>

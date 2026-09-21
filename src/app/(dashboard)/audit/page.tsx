@@ -1,5 +1,7 @@
 import React from "react"
 import { prisma } from "@/lib/prisma"
+import { getSessionUser } from "@/lib/session"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic";
 import { ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react"
@@ -12,13 +14,29 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  let sessionUser;
+  try {
+    sessionUser = await getSessionUser()
+  } catch {
+    redirect("/login")
+  }
+
+  const { role, outletId, isSuperAdmin } = sessionUser
+
+  if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    redirect("/dashboard")
+  }
+
   const sp = await searchParams
   const page = typeof sp?.page === "string" ? parseInt(sp.page) : 1
   const limit = 10
   const skip = (page - 1) * limit
 
+  const outletFilter = isSuperAdmin ? {} : { outletId: outletId! }
+
   const [logs, total] = await Promise.all([
     prisma.auditLog.findMany({
+      where: outletFilter,
       include: {
         user: {
           select: { name: true, role: true }
@@ -30,7 +48,9 @@ export default async function AuditPage({
       take: limit,
       skip: skip
     }),
-    prisma.auditLog.count()
+    prisma.auditLog.count({
+      where: outletFilter
+    })
   ])
 
   const totalPages = Math.ceil(total / limit)

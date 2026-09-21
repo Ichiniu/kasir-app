@@ -176,14 +176,13 @@ export function ReportView({ title, data, type }: ReportViewProps) {
             />
           )}
           
-          <Button 
-            variant="outline"
+          <button
             onClick={handleExportPDF}
-            className="h-10 px-4 rounded-lg border-[#e5e7eb] hover:bg-[#f3f4f6] text-[#111827] font-medium transition-colors"
+            className="h-10 px-4 rounded-lg border border-[#e5e7eb] bg-white hover:bg-[#f3f4f6] text-[#374151] text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
           >
-            <Download size={16} className="mr-2" />
-            PDF
-          </Button>
+            <Download size={16} />
+            Unduh PDF
+          </button>
         </div>
       </div>
 
@@ -254,8 +253,8 @@ export function ReportView({ title, data, type }: ReportViewProps) {
               <AreaChart data={data?.trendData || []}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#5E54F7" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#5E54F7" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#FFB800" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#FFB800" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -280,7 +279,7 @@ export function ReportView({ title, data, type }: ReportViewProps) {
                 <Area 
                   type="monotone" 
                   dataKey="amount" 
-                  stroke="#5E54F7" 
+                  stroke="#FFB800" 
                   strokeWidth={3}
                   fillOpacity={1} 
                   fill="url(#colorAmount)" 
@@ -423,43 +422,43 @@ export function ReportView({ title, data, type }: ReportViewProps) {
       </div>
 
       {/* Payment Mechanism - Minimalist */}
-      <Card className="rounded-xl border-none bg-[#5E54F7] text-white p-8 shadow-xl shadow-[#5E54F7]/20 relative overflow-hidden">
+      <Card className="rounded-xl border-none bg-[#FFB800] text-slate-950 p-8 shadow-xl shadow-[#FFB800]/20 relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none"></div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
            <div className="lg:col-span-4">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 mb-6 backdrop-blur-sm">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/5 border border-black/10 mb-6 backdrop-blur-sm">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-600 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white">Live from Database</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-950">Live from Database</span>
              </div>
              
-             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center mb-4 border border-white/20">
-               <CreditCard size={24} className="text-white" />
+             <div className="w-12 h-12 bg-black/10 backdrop-blur-md rounded-xl flex items-center justify-center mb-4 border border-black/10">
+               <CreditCard size={24} className="text-slate-950" />
              </div>
-             <h2 className="text-2xl font-semibold mb-3">Mekanisme Pembayaran</h2>
-             <p className="text-white/70 text-sm leading-relaxed">Analisis metode pembayaran pelanggan untuk optimasi channel transaksi.</p>
+             <h2 className="text-2xl font-semibold mb-3 text-slate-950">Mekanisme Pembayaran</h2>
+             <p className="text-slate-800 text-sm leading-relaxed">Analisis metode pembayaran pelanggan untuk optimasi channel transaksi.</p>
            </div>
            
            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {data?.paymentMethods && Object.entries(data.paymentMethods).map(([method, amount]: [string, any]) => (
-                <div key={method} className="bg-white/10 rounded-xl p-6 border border-white/10 transition-colors hover:bg-white/20 backdrop-blur-sm">
+                <div key={method} className="bg-black/10 rounded-xl p-6 border border-black/10 transition-colors hover:bg-black/20 backdrop-blur-sm">
                    <div className="flex justify-between items-start mb-4">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/90">{method}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-900">{method}</span>
                    </div>
-                   <h4 className="text-xl font-semibold mb-1">{formatCurrency(amount)}</h4>
-                   <p className="text-[10px] text-white/70 mb-4">{((amount / (data?.summary?.totalRevenue || 1)) * 100).toFixed(1)}% dari total</p>
+                   <h4 className="text-xl font-semibold mb-1 text-slate-950">{formatCurrency(amount)}</h4>
+                   <p className="text-[10px] text-slate-700 mb-4">{((amount / (data?.summary?.totalRevenue || 1)) * 100).toFixed(1)}% dari total</p>
                    <div className="w-full h-1 bg-black/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" style={{ width: `${(amount / (data?.summary?.totalRevenue || 1)) * 100}%` }}></div>
+                      <div className="h-full bg-slate-950/60 shadow-none" style={{ width: `${(amount / (data?.summary?.totalRevenue || 1)) * 100}%` }}></div>
                    </div>
                 </div>
               ))}
               {(!data?.paymentMethods || Object.keys(data.paymentMethods).length === 0) && (
-                <div className="col-span-full py-16 text-center text-white/50 text-sm italic border border-dashed border-white/20 rounded-xl">
+                <div className="col-span-full py-16 text-center text-slate-500 text-sm italic border border-dashed border-black/20 rounded-xl">
                   Belum ada data pembayaran
                 </div>
               )}
