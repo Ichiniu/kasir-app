@@ -49,7 +49,6 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 COPY --from=builder /app/node_modules/bcrypt ./node_modules/bcrypt
-COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs 2>/dev/null || true
 
 # package.json untuk tsx & prisma CLI
 COPY --from=builder /app/package.json ./package.json
