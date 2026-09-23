@@ -49,6 +49,8 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/tsx ./node_modules/tsx
 COPY --from=builder /app/node_modules/bcrypt ./node_modules/bcrypt
+# Deps tambahan untuk Prisma 6 (@prisma/config butuh effect)
+COPY --from=builder /app/node_modules/effect ./node_modules/effect
 
 # package.json untuk tsx & prisma CLI
 COPY --from=builder /app/package.json ./package.json

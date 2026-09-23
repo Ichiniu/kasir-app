@@ -28,15 +28,15 @@ echo "✅ Database is ready!"
 
 # Jalankan migrasi
 echo "🔄 Running database migrations..."
-npx prisma migrate deploy
+node node_modules/prisma/build/index.js migrate deploy
 echo "✅ Migrations complete!"
 
 # Seed jika tabel users kosong
 echo "🌱 Checking if seed is needed..."
-USER_COUNT=$(npx prisma db execute --stdin <<< "SELECT COUNT(*)::int FROM users;" 2>/dev/null | grep -E '^[0-9]+$' || echo "1")
+USER_COUNT=$(node node_modules/prisma/build/index.js db execute --stdin <<< "SELECT COUNT(*)::int FROM users;" 2>/dev/null | grep -E '^[0-9]+$' || echo "1")
 if [ "$USER_COUNT" = "0" ]; then
   echo "   Seeding initial data..."
-  npx tsx prisma/seed.ts
+  node node_modules/tsx/dist/cli.mjs prisma/seed.ts
   echo "✅ Seed complete!"
 else
   echo "   Data already exists, skipping seed."
