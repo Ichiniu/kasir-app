@@ -1,23 +1,29 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 echo "========================================"
 echo "  🚀 Kasir App - Production Startup"
 echo "========================================"
 
-# Tunggu Postgres siap (max 60 detik)
+# Tunggu Postgres siap via TCP check (max 60 detik)
 echo "⏳ Waiting for database to be ready..."
 RETRIES=30
-until npx prisma db execute --stdin <<< "SELECT 1" > /dev/null 2>&1 || [ $RETRIES -eq 0 ]; do
+DB_HOST="${PGHOST:-postgres}"
+DB_PORT="${PGPORT:-5432}"
+
+until node -e "
+const net = require('net');
+const c = net.createConnection($DB_PORT, '$DB_HOST', () => { c.destroy(); process.exit(0); });
+c.on('error', () => process.exit(1));
+" 2>/dev/null; do
   echo "   Retrying... ($RETRIES attempts left)"
   RETRIES=$((RETRIES - 1))
+  if [ $RETRIES -eq 0 ]; then
+    echo "❌ Database not reachable after 60s. Exiting."
+    exit 1
+  fi
   sleep 2
 done
-
-if [ $RETRIES -eq 0 ]; then
-  echo "❌ Database not reachable after 60s. Exiting."
-  exit 1
-fi
 echo "✅ Database is ready!"
 
 # Jalankan migrasi
