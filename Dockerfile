@@ -42,6 +42,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy Prisma schema, migrations, and seed
+COPY --from=builder /app/prisma ./prisma
+
 # Copy full node_modules dari builder (prisma 6 butuh banyak transitive deps)
 COPY --from=builder /app/node_modules ./node_modules
 
@@ -50,7 +53,7 @@ COPY --from=builder /app/package.json ./package.json
 
 # Entrypoint script
 COPY entrypoint.sh ./entrypoint.sh
-RUN chmod +x ./entrypoint.sh
+RUN sed -i 's/\r$//' ./entrypoint.sh && chmod +x ./entrypoint.sh
 
 RUN chown -R nextjs:nodejs /app
 USER nextjs
