@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import React from "react"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
-import { FileText, ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 interface AuditDetailModalProps {
   log: any

@@ -203,7 +203,7 @@ async function main() {
 
   // 6. Create Products per Outlet
   // Main Outlet Products
-  const prodMain1 = await prisma.product.upsert({
+  await prisma.product.upsert({
     where: { outletId_sku: { outletId: mainOutlet.id, sku: 'PRD-001' } },
     update: {},
     create: {
@@ -219,7 +219,7 @@ async function main() {
     }
   })
 
-  const prodMain2 = await prisma.product.upsert({
+  await prisma.product.upsert({
     where: { outletId_sku: { outletId: mainOutlet.id, sku: 'PRD-002' } },
     update: {},
     create: {

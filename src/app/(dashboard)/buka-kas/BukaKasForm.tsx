@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Wallet, CheckCircle2, AlertCircle } from "lucide-react"
+import { CheckCircle2, AlertCircle } from "lucide-react"
 import { openCashRegister } from "./actions"
 import { useRouter } from "next/navigation"
 
