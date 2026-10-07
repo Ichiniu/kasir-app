@@ -52,7 +52,7 @@ export function ProductList({
 
 
   const sortedProducts = React.useMemo(() => {
-    let items = [...initialProducts].filter(p => {
+    const items = [...initialProducts].filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
                             p.sku.toLowerCase().includes(search.toLowerCase()) ||
                             (p.category?.name || "").toLowerCase().includes(search.toLowerCase());

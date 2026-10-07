@@ -43,7 +43,7 @@ export function StockInList({
   // Note: For a true server-side "like audit", search should also be server side.
   // But let's stick to consistent pagination UI first.
   const filteredAndSortedAdjustments = React.useMemo(() => {
-    let items = [...adjustments].filter(adj => 
+    const items = [...adjustments].filter(adj => 
       adj.product.name.toLowerCase().includes(search.toLowerCase()) || 
       adj.product.sku.toLowerCase().includes(search.toLowerCase())
     )
