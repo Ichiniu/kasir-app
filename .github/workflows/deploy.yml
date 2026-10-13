@@ -66,5 +66,10 @@ jobs:
             echo "Secret EASYPANEL_DEPLOY_URL belum diset"
             exit 1
           fi
-          curl -fsS -X POST "$DEPLOY_URL" --connect-timeout 15 --max-time 60 --output /dev/null
+          curl -fsS -X POST "$DEPLOY_URL" \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -d '{}' \
+            --connect-timeout 15 --max-time 60
+          echo ""
           echo "Deploy berhasil dipicu. Cek hasil build dan deploy di Easypanel."
