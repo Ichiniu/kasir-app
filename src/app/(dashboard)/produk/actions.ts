@@ -16,16 +16,24 @@ function parseCurrency(value: string | number): number {
 }
 
 export async function upsertProduct(data: any) {
-  const { outletId, isSuperAdmin } = await getSessionUser()
-  const { id, categoryId, ...rest } = data
+  const { outletId, isSuperAdmin, role } = await getSessionUser()
+  if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    throw new Error("Akses ditolak: hanya Admin atau Superadmin yang dapat mengelola produk")
+  }
+
+  const { id, categoryId, name, skuId, description, unit, stock, minStock, price, cost } = data
 
   const processedData = {
-    ...rest,
+    sku: "",
+    skuId: "",
+    name,
+    description,
+    unit,
     categoryId: categoryId === "" ? null : categoryId,
-    price: parseCurrency(rest.price),
-    cost: parseCurrency(rest.cost),
-    stock: parseInt(String(rest.stock)),
-    minStock: parseInt(String(rest.minStock || 5)),
+    price: parseCurrency(price),
+    cost: parseCurrency(cost),
+    stock: parseInt(String(stock)),
+    minStock: parseInt(String(minStock || 5)),
   }
 
   let product: any;
@@ -39,6 +47,13 @@ export async function upsertProduct(data: any) {
     if (!oldProduct) {
       throw new Error("Produk tidak ditemukan atau Anda tidak memiliki akses")
     }
+
+    const selectedSku = await prisma.productSku.findFirst({
+      where: { id: String(skuId || ""), outletId: oldProduct.outletId },
+    })
+    if (!selectedSku) throw new Error("SKU yang dipilih tidak valid untuk outlet produk ini")
+    processedData.sku = selectedSku.code
+    processedData.skuId = selectedSku.id
 
     // If changing category, verify category belongs to the same outlet
     if (processedData.categoryId) {
@@ -103,6 +118,12 @@ export async function upsertProduct(data: any) {
       throw new Error("Pengguna tidak terhubung dengan outlet")
     }
 
+    if (!outletId) throw new Error("Pilih outlet sebelum membuat produk")
+    const selectedSku = await prisma.productSku.findFirst({ where: { id: String(skuId || ""), outletId } })
+    if (!selectedSku) throw new Error("Pilih SKU yang terdaftar pada outlet ini")
+    processedData.sku = selectedSku.code
+    processedData.skuId = selectedSku.id
+
     // Verify category if selected
     if (processedData.categoryId) {
       const validCategory = await prisma.category.findFirst({
@@ -139,7 +160,10 @@ export async function upsertProduct(data: any) {
 }
 
 export async function toggleProductStatus(id: string, currentStatus: boolean) {
-  const { outletId, isSuperAdmin } = await getSessionUser()
+  const { outletId, isSuperAdmin, role } = await getSessionUser()
+  if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    throw new Error("Akses ditolak: hanya Admin atau Superadmin yang dapat mengelola produk")
+  }
 
   const existingProduct = await prisma.product.findFirst({
     where: isSuperAdmin ? { id } : { id, outletId: outletId! }

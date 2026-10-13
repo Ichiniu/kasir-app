@@ -165,7 +165,7 @@ export function UserFormModal({
           {/* Password Field */}
           <div className="space-y-1">
             <Label htmlFor="password" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
-              Kata Sandi Akses {user && <span className="text-[9px] text-emerald-500 lowercase">(Opsional)</span>}
+              Kata Sandi Akses {user && <span className="text-[9px] text-emerald-500 lowercase">(Kosongkan jika tidak diubah)</span>}
             </Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
@@ -174,7 +174,7 @@ export function UserFormModal({
                 type={showPassword ? "text" : "password"}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder={user ? "••••••••" : "Min. 6 karakter kreatif"}
+                placeholder={user ? "Ketik kata sandi baru di sini..." : "Min. 6 karakter kreatif"}
                 className="h-10 pl-10 pr-10 rounded-lg border-[#e5e7eb] bg-white focus:ring-2 focus:ring-[#111827]/10 focus:border-[#111827] text-xs font-semibold"
               />
               <button
@@ -186,6 +186,11 @@ export function UserFormModal({
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            {user && (
+              <p className="text-[10px] text-[#6b7280] leading-tight">
+                🔒 Kata sandi lama tersimpan dalam enkripsi satu arah (hash) dan tidak dapat dilihat kembali. Masukkan teks baru jika ingin mereset sandi user ini.
+              </p>
+            )}
           </div>
 
           {/* Role Field */}

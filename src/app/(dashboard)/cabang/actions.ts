@@ -5,6 +5,16 @@ import { revalidatePath } from "next/cache"
 import { createLog } from "@/lib/audit"
 import { getSessionUser } from "@/lib/session"
 
+const defaultStocktakeFields = [
+  { key: "ITEM", label: "Item", type: "TEXT" as const, position: 0, isCore: true },
+  { key: "OPENING", label: "Stock Awal", type: "NUMBER" as const, position: 1, isCore: true },
+  { key: "INCOMING", label: "Masuk", type: "NUMBER" as const, position: 2, isCore: true },
+  { key: "OUTGOING", label: "Keluar", type: "NUMBER" as const, position: 3, isCore: true },
+  { key: "ENDING", label: "Stock Akhir", type: "NUMBER" as const, position: 4, isCore: true },
+  { key: "PHYSICAL", label: "Hitung Fisik", type: "NUMBER" as const, position: 5, isCore: true },
+  { key: "NOTES", label: "Keterangan", type: "TEXT" as const, position: 6, isCore: true },
+]
+
 export async function getOutletsWithStats() {
   const { role } = await getSessionUser()
   if (role !== "SUPERADMIN") {
@@ -41,6 +51,7 @@ export async function createOutlet(data: { nama: string; alamat?: string }) {
       data: {
         nama: cleanNama,
         alamat: data.alamat?.trim() || null,
+        stocktakeFields: { create: defaultStocktakeFields },
       },
     })
 

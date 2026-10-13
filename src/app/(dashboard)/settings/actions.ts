@@ -15,7 +15,7 @@ export async function getOutlets() {
   }
   if (outletId) {
     return await prisma.outlet.findMany({
-      where: { id: outletId },
+      where: { id: outletId },  bawah 
       orderBy: { nama: "asc" }
     })
   }

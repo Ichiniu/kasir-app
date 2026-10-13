@@ -6,7 +6,10 @@ import { createLog } from "@/lib/audit"
 import { getSessionUser } from "@/lib/session"
 
 export async function createStockIn(data: any) {
-  const { outletId, isSuperAdmin } = await getSessionUser()
+  const { outletId, isSuperAdmin, role } = await getSessionUser()
+  if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    throw new Error("Akses ditolak: hanya Admin atau Superadmin yang dapat mengelola stok")
+  }
   const { productId, quantity, cost, price, notes } = data
 
   const qty = parseInt(quantity)

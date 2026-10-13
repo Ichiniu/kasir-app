@@ -28,10 +28,12 @@ import Link from "next/link"
 export function ProductList({ 
   initialProducts, 
   categories,
+  skus,
   pagination 
 }: { 
   initialProducts: any[], 
   categories: any[],
+  skus: any[],
   pagination: {
     page: number
     limit: number
@@ -396,6 +398,7 @@ export function ProductList({
         onOpenChange={setIsFormOpen}
         product={selectedProduct}
         categories={categories}
+        skus={skus.filter((sku) => !sku.assignedProductId || sku.assignedProductId === selectedProduct?.id)}
       />
     </div>
   )

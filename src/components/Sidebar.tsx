@@ -6,9 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Tag,
   Package,
-  ArrowDownToLine,
   ShoppingCart,
   History,
   Wallet,
@@ -19,6 +17,7 @@ import {
   LogOut,
   Settings,
   Store,
+  ClipboardCheck,
 } from "lucide-react";
 import { signIn, signOut, useSession } from "@/lib/auth-client";
 
@@ -33,9 +32,14 @@ const sidebarItems = [
     section: "PRODUK & INVENTORI",
     roles: ["ADMIN"],
     items: [
-      { title: "Kategori", href: "/kategori", icon: Tag },
-      { title: "Produk", href: "/produk", icon: Package },
-      { title: "Stok Masuk", href: "/stok-masuk", icon: ArrowDownToLine },
+      { title: "Produk & Inventori", href: "/produk", icon: Package },
+    ],
+  },
+  {
+    section: "OPERASIONAL DAPUR",
+    roles: ["ADMIN", "CASHIER"],
+    items: [
+      { title: "Stock Opname", href: "/stock-opname", icon: ClipboardCheck },
     ],
   },
   {
@@ -77,6 +81,13 @@ const sidebarItems = [
     items: [
       { title: "Kelola Cabang", href: "/cabang", icon: Store },
       { title: "Pengaturan Akun", href: "/settings", icon: Settings },
+    ],
+  },
+  {
+    section: "LAPORAN SUPERADMIN",
+    roles: ["SUPERADMIN"],
+    items: [
+      { title: "Laporan Penjualan", href: "/laporan-penjualan", icon: BarChart3 },
     ],
   },
 ];

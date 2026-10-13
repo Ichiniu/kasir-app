@@ -6,7 +6,10 @@ import { createLog } from "@/lib/audit"
 import { getSessionUser } from "@/lib/session"
 
 export async function upsertCategory(data: { id?: string; name: string; description?: string }) {
-  const { outletId, isSuperAdmin } = await getSessionUser()
+  const { outletId, isSuperAdmin, role } = await getSessionUser()
+  if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    throw new Error("Akses ditolak: hanya Admin atau Superadmin yang dapat mengelola kategori")
+  }
   const { id, name, description } = data
 
   const trimmedName = name.trim()
@@ -75,7 +78,10 @@ export async function upsertCategory(data: { id?: string; name: string; descript
 }
 
 export async function deleteCategory(id: string) {
-  const { outletId, isSuperAdmin } = await getSessionUser()
+  const { outletId, isSuperAdmin, role } = await getSessionUser()
+  if (role !== "ADMIN" && role !== "SUPERADMIN") {
+    throw new Error("Akses ditolak: hanya Admin atau Superadmin yang dapat mengelola kategori")
+  }
 
   const category = await prisma.category.findFirst({
     where: isSuperAdmin ? { id } : { id, outletId: outletId! },

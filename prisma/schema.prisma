@@ -20,6 +20,11 @@ model Outlet {
 
   users                User[]
   categories           Category[]
+  skus                 ProductSku[]
+  rawMaterials         RawMaterial[]
+  stocktakeFields      StocktakeField[]
+  stocktakes           InventoryStocktake[]
+  materialRequests     MaterialRequest[]
   products             Product[]
   transactions         Transaction[]
   transactionItems     TransactionItem[]
@@ -50,6 +55,10 @@ model User {
   auditLogs     AuditLog[]
   sessions      Session[]
   accounts      Account[]
+  stocktakesCreated InventoryStocktake[] @relation("StocktakeCreator")
+  stocktakesReviewed InventoryStocktake[] @relation("StocktakeReviewer")
+  materialRequestsCreated MaterialRequest[] @relation("MaterialRequestCreator")
+  materialRequestsReviewed MaterialRequest[] @relation("MaterialRequestReviewer")
 
   @@index([outletId])
   @@map("users")
@@ -150,6 +159,7 @@ model Product {
   id          String   @id @default(cuid())
   outletId    String
   sku         String
+  skuId       String?  @unique
   name        String
   description String?  @db.Text
   price       Decimal  @db.Decimal(10, 2)
@@ -165,6 +175,7 @@ model Product {
 
   outlet               Outlet                @relation(fields: [outletId], references: [id])
   category             Category?             @relation(fields: [categoryId], references: [id])
+  skuRecord            ProductSku?           @relation(fields: [skuId], references: [id])
   transactionItems     TransactionItem[]
   inventoryAdjustments InventoryAdjustment[]
 
@@ -173,6 +184,145 @@ model Product {
   @@index([categoryId])
   @@index([sku])
   @@map("products")
+}
+
+// Master SKU - kode SKU yang tersedia untuk dipasangkan ke satu produk pada outlet.
+model ProductSku {
+  id        String   @id @default(cuid())
+  outletId  String
+  code      String
+  createdAt DateTime @default(now())
+
+  outlet  Outlet   @relation(fields: [outletId], references: [id])
+  product Product?
+
+  @@unique([outletId, code])
+  @@index([outletId])
+  @@map("product_skus")
+}
+
+// Bahan dapur disimpan terpisah dari produk kasir agar tidak ikut dijual di POS.
+model RawMaterial {
+  id           String   @id @default(cuid())
+  outletId     String
+  name         String
+  unit         String
+  currentStock Decimal  @default(0) @db.Decimal(12, 3)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  outlet Outlet @relation(fields: [outletId], references: [id])
+  stocktakeLines InventoryStocktakeLine[]
+  requestLines MaterialRequestLine[]
+
+  @@unique([outletId, name])
+  @@index([outletId, isActive])
+  @@map("raw_materials")
+}
+
+model StocktakeField {
+  id        String   @id @default(cuid())
+  outletId  String
+  key       String
+  label     String
+  type      StocktakeFieldType @default(TEXT)
+  position  Int      @default(0)
+  isCore    Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  outlet Outlet @relation(fields: [outletId], references: [id])
+
+  @@unique([outletId, key])
+  @@index([outletId, isActive, position])
+  @@map("stocktake_fields")
+}
+
+model InventoryStocktake {
+  id          String          @id @default(cuid())
+  outletId    String
+  date        DateTime        @db.Date
+  shift       StocktakeShift
+  status      StocktakeStatus @default(SUBMITTED)
+  notes       String?         @db.Text
+  reviewNotes String?         @db.Text
+  createdById String
+  reviewedById String?
+  submittedAt DateTime        @default(now())
+  reviewedAt  DateTime?
+  fieldsSnapshot Json?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  outlet    Outlet @relation(fields: [outletId], references: [id])
+  createdBy User   @relation("StocktakeCreator", fields: [createdById], references: [id])
+  reviewedBy User? @relation("StocktakeReviewer", fields: [reviewedById], references: [id])
+  lines     InventoryStocktakeLine[]
+
+  @@unique([outletId, date, shift])
+  @@index([outletId, status, date])
+  @@map("inventory_stocktakes")
+}
+
+model InventoryStocktakeLine {
+  id                 String  @id @default(cuid())
+  stocktakeId        String
+  rawMaterialId      String
+  openingStock       Decimal @db.Decimal(12, 3)
+  incoming           Decimal @default(0) @db.Decimal(12, 3)
+  outgoing           Decimal @default(0) @db.Decimal(12, 3)
+  endingStock        Decimal @db.Decimal(12, 3)
+  physicalStock      Decimal @db.Decimal(12, 3)
+  notes              String? @db.Text
+  extraValues        Json?
+
+  stocktake   InventoryStocktake @relation(fields: [stocktakeId], references: [id], onDelete: Cascade)
+  rawMaterial RawMaterial        @relation(fields: [rawMaterialId], references: [id])
+
+  @@unique([stocktakeId, rawMaterialId])
+  @@index([rawMaterialId])
+  @@map("inventory_stocktake_lines")
+}
+
+model MaterialRequest {
+  id          String                @id @default(cuid())
+  outletId    String
+  forDate     DateTime              @db.Date
+  status      MaterialRequestStatus @default(DRAFT)
+  notes       String?               @db.Text
+  reviewNotes String?               @db.Text
+  createdById String
+  reviewedById String?
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  outlet     Outlet @relation(fields: [outletId], references: [id])
+  createdBy  User   @relation("MaterialRequestCreator", fields: [createdById], references: [id])
+  reviewedBy User?  @relation("MaterialRequestReviewer", fields: [reviewedById], references: [id])
+  lines      MaterialRequestLine[]
+
+  @@unique([outletId, forDate])
+  @@index([outletId, status, forDate])
+  @@map("material_requests")
+}
+
+model MaterialRequestLine {
+  id              String  @id @default(cuid())
+  requestId       String
+  rawMaterialId   String
+  requestedAmount Decimal @db.Decimal(12, 3)
+  notes           String? @db.Text
+
+  request     MaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  rawMaterial RawMaterial     @relation(fields: [rawMaterialId], references: [id])
+
+  @@unique([requestId, rawMaterialId])
+  @@index([rawMaterialId])
+  @@map("material_request_lines")
 }
 
 // Transaction Model - Transaksi penjualan
@@ -299,6 +449,29 @@ model InventoryAdjustment {
 enum StockAdjustmentType {
   IN
   OUT
+}
+
+enum StocktakeShift {
+  MORNING
+  AFTERNOON
+}
+
+enum StocktakeFieldType {
+  TEXT
+  NUMBER
+}
+
+enum StocktakeStatus {
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum MaterialRequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
 }
 
 // Settings Model - Pengaturan aplikasi

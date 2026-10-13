@@ -220,7 +220,7 @@ export function StockInList({
            
            <div className="flex items-center gap-2">
               <Link 
-                href={`/stok-masuk?page=${Math.max(1, pagination.page - 1)}`}
+                href={`/produk?tab=stok-masuk&page=${Math.max(1, pagination.page - 1)}`}
                 className={cn(
                   "p-2 rounded-lg border border-[#e5e7eb] bg-white text-[#6b7280] transition-colors hover:bg-white hover:text-[#111827]",
                   pagination.page <= 1 && "opacity-30 pointer-events-none"
@@ -236,7 +236,7 @@ export function StockInList({
                     <React.Fragment key={p}>
                       {i > 0 && arr[i-1] !== p - 1 && <span className="text-[#9ca3af] px-1 text-xs">...</span>}
                       <Link
-                        href={`/stok-masuk?page=${p}`}
+                        href={`/produk?tab=stok-masuk&page=${p}`}
                         className={cn(
                           "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-colors",
                           pagination.page === p ? "bg-[#FFB800] text-slate-950 font-bold shadow-md shadow-[#FFB800]/20" : "bg-white border border-[#e5e7eb] text-[#6b7280] hover:bg-gray-50"
@@ -250,7 +250,7 @@ export function StockInList({
               </div>
 
               <Link 
-                href={`/stok-masuk?page=${Math.min(pagination.totalPages, pagination.page + 1)}`}
+                href={`/produk?tab=stok-masuk&page=${Math.min(pagination.totalPages, pagination.page + 1)}`}
                 className={cn(
                   "p-2 rounded-lg border border-[#e5e7eb] bg-white text-[#6b7280] transition-colors hover:bg-white hover:text-[#111827]",
                   pagination.page >= pagination.totalPages && "opacity-30 pointer-events-none"

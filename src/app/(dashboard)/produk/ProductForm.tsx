@@ -26,11 +26,12 @@ interface ProductFormProps {
   onOpenChange: (open: boolean) => void
   product?: any
   categories: any[]
+  skus: any[]
 }
 
 const units = ["Pcs", "Kg", "Gram", "Ikat", "Botol", "Gelas", "Bungkus", "Box"]
 
-export function ProductForm({ open, onOpenChange, product, categories }: ProductFormProps) {
+export function ProductForm({ open, onOpenChange, product, categories, skus }: ProductFormProps) {
   const [loading, setLoading] = useState(false)
   const [cost, setCost] = useState<string>(product?.cost ? String(Number(product.cost)) : "0")
   const [price, setPrice] = useState<string>(product?.price ? String(Number(product.price)) : "0")
@@ -102,15 +103,18 @@ export function ProductForm({ open, onOpenChange, product, categories }: Product
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto custom-scrollbar">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="sku" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Nomor SKU</Label>
-              <Input
-                id="sku"
-                name="sku"
-                defaultValue={product?.sku}
-                placeholder="PROD-..."
-                required
-                className="h-9 rounded-lg border-[#e5e7eb] bg-white focus:ring-2 focus:ring-[#111827]/10 focus:border-[#111827] text-xs font-semibold transition-all"
-              />
+              <Label htmlFor="skuId" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Nomor SKU</Label>
+              <Select name="skuId" defaultValue={product?.skuId || ""} required>
+                <SelectTrigger id="skuId" className="h-9 rounded-lg border-[#e5e7eb] bg-white text-xs font-semibold">
+                  <SelectValue placeholder="Pilih SKU..." />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg border-[#e5e7eb] bg-white">
+                  {skus.map((sku) => (
+                    <SelectItem key={sku.id} value={sku.id} className="text-xs">{sku.code}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {skus.length === 0 && <p className="text-[10px] text-amber-700">Buat SKU terlebih dahulu pada tab SKU.</p>}
             </div>
             <div className="space-y-1">
               <Label htmlFor="name" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Nama Lengkap Produk</Label>
