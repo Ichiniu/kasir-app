@@ -142,7 +142,7 @@ function LoginForm() {
         {/* Gunakan gambar background cafe-bg.png atau default image lainnya */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
-          style={{ backgroundImage: "url('/cafe-bg.jpg')" }}
+          style={{ backgroundImage: "url('/cafe-bgt.png')" }}
         />
         
         {/* Gradient Overlay tipis agar tidak terlalu flat */}
