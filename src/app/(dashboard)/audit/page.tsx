@@ -4,7 +4,7 @@ import { getSessionUser } from "@/lib/session"
 import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic";
-import { ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { AuditTable } from "./AuditTable"

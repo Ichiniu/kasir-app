@@ -48,7 +48,7 @@ function LoginForm() {
           setIsLoading(false)
         }
       })
-    } catch (error) {
+    } catch {
       setError('Terjadi kesalahan sistem')
       setIsLoading(false)
     }

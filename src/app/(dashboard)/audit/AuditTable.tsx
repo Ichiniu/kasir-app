@@ -4,7 +4,7 @@ import React, { useState } from "react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { Badge } from "@/components/ui/badge"
-import { User as UserIcon, Activity, Eye } from "lucide-react"
+import { Activity, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Table,

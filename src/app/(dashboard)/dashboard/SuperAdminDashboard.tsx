@@ -462,7 +462,7 @@ export function SuperAdminDashboard({ initialData }: SuperAdminDashboardProps) {
             <Building2 size={36} className="mx-auto text-[#9ca3af]" />
             <h3 className="text-base font-bold text-[#111827]">Tidak Ada Outlet yang Cocok</h3>
             <p className="text-xs text-[#6b7280] max-w-sm mx-auto">
-              Tidak ditemukan outlet dengan kata kunci pencarian "{searchQuery}". Silakan coba kata kunci lain.
+              Tidak ditemukan outlet dengan kata kunci pencarian &quot;{searchQuery}&quot;. Silakan coba kata kunci lain.
             </p>
           </div>
         )}

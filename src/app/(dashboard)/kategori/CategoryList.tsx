@@ -39,7 +39,7 @@ export function CategoryList({ categories }: { categories: CategoryItem[] }) {
   const [actionError, setActionError] = useState<string | null>(null)
 
   const filteredAndSortedCategories = React.useMemo(() => {
-    let items = [...categories].filter((c) => {
+    const items = [...categories].filter((c) => {
       const matchesSearch =
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         (c.description || "").toLowerCase().includes(search.toLowerCase())
