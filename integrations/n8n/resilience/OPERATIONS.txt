@@ -1,0 +1,178 @@
+WORKFLOW CASIR — AUDIT KETAHANAN, 13 OKTOBER 2026
+
+STATUS
+Workflow utama: https://n8n.ichsanlab.web.id/workflow/RogxKimgZh9ITEjW
+Recovery Guard: https://n8n.ichsanlab.web.id/workflow/LgYyPzHS9CylFejz (nonaktif)
+Draft utama tersimpan dan dibaca ulang: 53 node sesuai, published version tidak berubah.
+Snapshot sebelum audit: workflow-before-hardening.json (jangan restore saat live
+tanpa membandingkan perubahan operator; snapshot bukan backup database).
+Hardening disiapkan sebagai DRAFT, bukan bukti siap produksi. Credential laporan,
+model dan GoWA yang sudah dipasang pengguna dipertahankan. Database kontrol belum
+dibuat/dihubungkan, role server belum diubah, pemantau belum dideploy, dan tidak ada
+pesan WhatsApp nyata yang dikirim saat audit. Jangan mengaktifkan flag hanya untuk
+menghilangkan peringatan credential.
+
+TEMUAN DAN PERBAIKAN
+1. Sebelumnya ACK mendahului penyimpanan permintaan, tanpa dedup atomik/rate limit.
+   Sekarang HMAC -> validasi -> otorisasi -> admission PostgreSQL -> ACK -> laporan.
+   Primary key (device,message_id) menolak duplikat selama 7 hari. Pesan masuk
+   berumur >5 menit ditolak. Ini bukan sistem exactly-once atau antrean replay.
+2. Batas 2 permintaan aktif global, 1/owner, 3/menit/owner, 100/24 jam/owner,
+   dan 20/menit global. Penguncian row PostgreSQL melindungi lintas worker.
+   Yang dibatasi hanya permintaan yang diterima; ingress wajib membatasi spam
+   sebelum execution n8n dibuat. Duplicate ACK 200; penuh 429; gangguan 503.
+3. Agent maksimum 3 putaran, model 15s/request, retries=0, maxTokens=1000.
+   Batas putaran BUKAN jaminan 3 query karena model dapat meminta beberapa tool.
+   Semua tool SQL fixed, parameterized, dibatasi outlet. Daftar maksimal 20-200
+   baris tergantung laporan; penjualan harian diturunkan dari 500 ke 100.
+   LIMIT membatasi hasil, bukan jumlah row yang harus dipindai. Jangan menganggap
+   LIMIT sebagai pengganti statement_timeout atau indeks yang tepat.
+4. Report DB diperiksa: read-only aktif, bukan superuser, statement_timeout
+   1..10000ms, CONNECTION LIMIT 1..4. Jika gagal, AI tidak dijalankan.
+   Koneksi 3s; role DB harus membatasi query 10s atau lebih kecil.
+5. Control DB diperiksa SEBELUM fungsi dijalankan: bukan superuser,
+   statement_timeout 1..3000ms, lock_timeout 1..1000ms, CONNECTION LIMIT 1..6,
+   transaksi read-write. Credential tidak aman menghasilkan fail-closed.
+6. Circuit breaker 60s saat dependency atau pengiriman gagal. Setelah cooldown
+   hanya satu permintaan uji; sukses baru membuka akses normal. Keberhasilan
+   permintaan lama tidak boleh menutup breaker dari kegagalan yang lebih baru.
+7. Balasan disimpan sebelum pengiriman dan diklaim sekali. GoWA tanpa retry.
+   SUCCESS + results.message_id berarti API menerima pengiriman, BUKAN bukti
+   pesan sampai/dibaca. Timeout/respons ambigu masuk UNKNOWN untuk diperiksa.
+8. Workflow timeout 90s, lease 180s. Timeout workflow bukan hard kill untuk semua
+   node. Native GoWA tidak menyediakan parameter timeout per request. Pasang
+   batas upstream/proxy GoWA <=20s dan uji pembatalan/worker sebelum produksi.
+   Jika lease habis, admission berikutnya/recovery guard menandai REVIEW/UNKNOWN
+   dan memblokir SEMUA permintaan baru sampai operator memeriksa worker.
+   Ini mencegah proses macet lama diganti terus-menerus dengan proses baru.
+9. Tidak ada retry execution otomatis atau loop kembali ke agent/pengiriman.
+   Jangan menggunakan Retry Execution/partial execution untuk alur produksi:
+   replay dari node pengiriman dapat melewati claim yang sudah disimpan.
+   Batasi akses editor/manual execution pada operator tepercaya.
+
+DATABASE YANG DIPERLUKAN
+- kasir: database transaksi POS; laporan memakai role SELECT khusus.
+- database internal n8n: workflow, credential, execution; jangan mengubah tabelnya.
+- casir_automation: database TERPISAH untuk dua tabel casir_control, bukan salinan
+  data penjualan. Boleh instance PostgreSQL sama untuk awal, tetapi bukan isolasi
+  CPU/IO atau ketahanan jika mesin fisik yang sama mati.
+
+PERSIAPAN ADMIN DATABASE (BELUM DIJALANKAN)
+1. Buat database casir_automation dan login khusus casir_automation_worker melalui
+   kanal admin aman. Jangan memakai credential aplikasi kasir atau n8n internal.
+2. Jalankan control-schema.sql hanya pada database casir_automation.
+3. Sebagai admin database, setelah role itu benar-benar dibuat:
+   GRANT CONNECT ON DATABASE casir_automation TO casir_automation_worker;
+   GRANT USAGE ON SCHEMA casir_control TO casir_automation_worker;
+   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA casir_control
+     TO casir_automation_worker;
+   GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA casir_control TO casir_automation_worker;
+   ALTER ROLE casir_automation_worker CONNECTION LIMIT 6;
+   ALTER ROLE casir_automation_worker SET statement_timeout = '3s';
+   ALTER ROLE casir_automation_worker SET lock_timeout = '1s';
+   ALTER ROLE casir_automation_worker SET idle_in_transaction_session_timeout = '5s';
+   Role hanya diberi akses ke database/schema kontrol. Koneksi baru diperlukan
+   untuk default ALTER ROLE berlaku. Jangan memberikan role ini ke model AI.
+4. Buat credential PostgreSQL kontrol di n8n dan pilih pada SEMUA node SQL
+   casir_control (workflow utama + recovery), bukan 11 tool laporan.
+5. Role laporan khusus harus NOSUPERUSER, NOCREATEDB, NOCREATEROLE, CONNECTION LIMIT 4,
+   default_transaction_read_only=on, statement_timeout='10s', lock_timeout='2s',
+   idle_in_transaction_session_timeout='5s'. GRANT SELECT minimum pada tabel/kolom
+   laporan yang benar-benar dipakai; jangan grant akun/session/token/password.
+   Query perlu nama kasir dari users: gunakan hak kolom terbatas sesuai query.
+   Jangan ALTER role bersama yang dipakai POS atau bot lain. Ganti credential
+   laporan jika credential yang ada tidak khusus read-only.
+6. Putuskan TLS/jaringan privat dan izin koneksi. Jangan membuka port PostgreSQL
+   ke internet umum. Uji skema server sesuai Prisma lokal tanpa menjalankan migrasi
+   hanya untuk bot. Pertimbangkan reporting replica bila laporan membebani POS.
+
+SAAT GANGGUAN
+- POS DB tidak tersedia atau tidak memenuhi batas: hentikan AI, simpan balasan
+  gangguan, coba kirim sekali jika GoWA sehat; breaker menahan permintaan berikut.
+  Tidak mengarang angka, tidak menulis stok/transaksi, tidak menyebut data lama fresh.
+- Model gagal: fallback generik, breaker sama. Tidak retry tak terbatas.
+- GoWA gagal: UNKNOWN; cek riwayat GoWA secara manual. Jangan kirim ulang otomatis.
+- Control DB gagal: 503 sebelum ACK diterima, tidak menjalankan AI/SQL laporan.
+- Mati setelah ACK: metadata admission tetap ada; setelah pulih ditandai REVIEW.
+  Pertanyaan asli sengaja tidak disimpan, sehingga tidak dapat di-replay otomatis.
+  Operator meminta owner mengirim pertanyaan BARU setelah pemulihan.
+- Seluruh VPS mati: workflow ini tidak bisa berjalan/mengirim pesan. Pemantau di
+  host berbeda memberi peringatan. Pemantau tidak memperbaiki/merestart server.
+- Respons 429/503 tidak menjamin GoWA retry; verifikasi perilaku versi GoWA yang
+  terpasang. Batasi retry pengirim (mis. 3 upaya dengan backoff), jangan retry tanpa
+  batas. Pesan yang tidak diterima mungkin perlu dikirim ulang oleh owner.
+
+PEMULIHAN OPERATOR
+1. Pulihkan database/storage/jaringan dahulu; pastikan koneksi dan disk sehat.
+2. Batalkan execution/worker yang macet, cek query aktif dan pengiriman GoWA.
+   Jangan membuka blocked_reason sebelum proses lama benar-benar berhenti.
+3. Jalankan SELECT casir_control.maintenance(); di database kontrol atau aktifkan
+   Recovery Guard setelah credential siap. Periksa metadata tanpa mencetak reply:
+   SELECT device,message_id,execution_id,status,failure_code,created_at
+     FROM casir_control.requests WHERE status IN ('review','unknown');
+4. UNKNOWN wajib dicocokkan dengan GoWA, bukan diasumsikan gagal. Simpan audit
+   penyelesaian insiden. Jangan menghapus dedup record supaya pesan lama diproses.
+5. Hanya setelah aman, admin boleh menandai insiden selesai dan membuka lock:
+   BEGIN;
+   UPDATE casir_control.requests SET failure_code='OPERATOR_REVIEWED'
+     WHERE status IN ('review','unknown') AND failure_code IS DISTINCT FROM 'OPERATOR_REVIEWED';
+   UPDATE casir_control.breaker SET blocked_reason=NULL,opened_at=NULL,open_until=NULL WHERE id=1;
+   COMMIT;
+   Jangan jalankan SQL ini sebagai bagian dari timer atau self-healing otomatis.
+6. Uji satu pesan baru dari owner yang disetujui, lalu pantau pemakaian sumber daya.
+
+MONITOR DI HOST TERPISAH
+File monitor.mjs + compose.monitor.yml tidak bergantung pada n8n dan tidak punya
+akses database. Set variabel melalui secret/config host, jangan commit .env:
+  N8N_READINESS_URL=https://n8n.ichsanlab.web.id/healthz/readiness
+  CASIR_HEALTH_URL=https://casirplus.my.id/api/health
+  INDEPENDENT_ALERT_WEBHOOK=<endpoint HTTPS eksternal penerima notifikasi>
+Endpoint notifikasi harus menerima JSON {service,event,time}. Ini bukan adapter
+Telegram/Slack/email langsung; pilih receiver yang sesuai dan uji sebelum produksi.
+Jangan menunjuk GoWA/n8n di VPS yang sama sebagai satu-satunya kanal peringatan.
+Jalankan satu replica: docker compose -f compose.monitor.yml up -d
+Periksa target nyata mengembalikan health status, bukan halaman login 200.
+Monitor memeriksa status HTTP saja; tidak membuktikan bot/tool/GoWA bekerja end-to-end.
+3 kegagalan berturut -> DOWN; 2 sukses -> recovered; timeout 5s/probe, siklus serial
+60s setelah pemeriksaan selesai. Peringatan berubah status, bukan setiap siklus;
+upaya alert maksimal 1/15 menit/service, termasuk jika receiver gagal. Ada state
+persistent untuk menahan spam sesudah restart. Recovery alert bisa tertunda cooldown.
+Pantau juga proses monitor dari penyedia independen; satu monitor tetap single point
+of failure. Pengaturan restart container hanya on-failure:3, bukan restart storm.
+
+INGRESS DAN INFRASTRUKTUR (BELUM DITERAPKAN)
+- Batasi webhook route SAJA pada reverse proxy: body <=64KiB, request timeout,
+  rate limit misalnya 1 request/detik per IP dan burst 10. Batasi IP GoWA bila stabil.
+  Jangan percaya X-Forwarded-For dari pihak tak tepercaya. Uji retry/ACK di staging.
+- Batas concurrency n8n instance, contoh N8N_CONCURRENCY_PRODUCTION_LIMIT=5,
+  memengaruhi SEMUA workflow production; ukur kapasitas dan bot lain dahulu.
+  Ini bukan limit manual/sub-workflow atau jaminan backlog terbatas. Ingress tetap
+  wajib; jangan mengantre spam tak terbatas di Redis/n8n saat DB sedang gagal.
+- Tetapkan CPU/RAM/connection pool, execution retention, dan alarm disk penuh.
+  Batasi retensi execution metadata sesuai kebutuhan; isi laporan tidak disimpan
+  sebagai n8n execution data. Teks reply kontrol maksimal 1 jam, metadata 7 hari.
+- Backup PostgreSQL terenkripsi ke storage di luar VPS: database POS, internal
+  n8n, database kontrol; simpan N8N_ENCRYPTION_KEY terpisah dengan aman. Cadangkan
+  konfigurasi dan GoWA session sesuai kebijakan. Uji restore, bukan hanya backup.
+- Tentukan RPO/RTO bisnis sebelum live. Backup harian saja bisa kehilangan sampai
+  24 jam perubahan; gunakan WAL/PITR atau replikasi jika kebutuhan lebih ketat.
+  Failover otomatis memerlukan desain/otorisasi terpisah, bukan sekadar node n8n.
+
+UJI SEBELUM PUBLISH
+Tes offline tersedia: node --test integrations/n8n/workflow-casir.test.mjs
+dan npm ci --ignore-scripts lalu npm test di folder resilience.
+SQL diuji dengan PostgreSQL WASM/PGlite; bukan tes PostgreSQL jaringan/multi-worker.
+Uji staging: dua owner bersamaan, duplikat ID, body/signature salah, spam, DB mati,
+query >10s, control role tanpa timeout, model timeout, GoWA respons gagal/ambigu,
+worker mati setelah ACK/claim/send, seluruh VPS mati, alert/recovery dari host lain.
+Verifikasi native GoWA/version response, model tool calling, connection pool dan
+timeout pada n8n terpasang. Tetapkan flags liveEnabled/ingressControlsReady/
+controlDatabaseReady/databaseReady/aiReady/sendReplies hanya setelah lolos.
+Publikasikan draft secara sengaja; workflow yang sudah published tetap memakai
+versi published sebelumnya sampai versi baru diaktifkan.
+
+SUMBER TEKNIS
+https://docs.n8n.io/hosting/scaling/concurrency-control/
+https://docs.n8n.io/hosting/logging-monitoring/monitoring/
+https://github.com/aldinokemal/n8n-node-gowa/blob/main/nodes/GOWA/send.operations.ts
+https://www.postgresql.org/docs/current/runtime-config-client.html

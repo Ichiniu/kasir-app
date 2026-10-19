@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { Check, ClipboardCheck, ClipboardList, Edit2, PackagePlus, Plus, RotateCcw, Save, ShieldCheck, ShoppingBasket, Trash2, X } from "lucide-react"
+import { Check, ClipboardCheck, ClipboardList, Edit2, Filter, PackagePlus, Plus, RotateCcw, Save, ShieldCheck, ShoppingBasket, Trash2, X } from "lucide-react"
 import {
   createRawMaterial,
   createStocktakeField,
@@ -70,6 +70,106 @@ export function StockOpnameWorkspace({
   const currentRequest = requests.find((item) => item.forDate === requestDate)
   const editableRequest = !currentRequest || currentRequest.status === "DRAFT" || currentRequest.status === "REJECTED"
 
+  const [stocktakeColumnFilters, setStocktakeColumnFilters] = useState<Record<string, string>>({})
+  const [requestColumnFilters, setRequestColumnFilters] = useState<Record<string, string>>({})
+
+  const previousApprovedLines = useMemo(() => {
+    const latest = [...stocktakes]
+      .filter((item) => item.status === "APPROVED" && (item.date < stocktakeDate || (shift === "AFTERNOON" && item.date === stocktakeDate && item.shift === "MORNING")))
+      .sort((a, b) => b.date.localeCompare(a.date) || b.submittedAt.localeCompare(a.submittedAt))[0]
+    return new Map(latest?.lines.map((line) => [line.rawMaterialId, line]) ?? [])
+  }, [stocktakes, stocktakeDate, shift])
+
+  const hasActiveStocktakeFilter = useMemo(() => {
+    return Object.values(stocktakeColumnFilters).some((val) => val.trim() !== "")
+  }, [stocktakeColumnFilters])
+
+  const filteredStocktakeMaterials = useMemo(() => {
+    if (!hasActiveStocktakeFilter) return activeMaterials
+
+    return activeMaterials.filter((material, originalIndex) => {
+      const entry = countEntries[material.id] ?? { incoming: "0", outgoing: "0", physicalStock: "", notes: "", extraValues: {} }
+      const currentStocktakeLine = currentStocktake?.lines.find((line) => line.rawMaterialId === material.id)
+      const prevLine = previousApprovedLines.get(material.id)
+      const opening = currentStocktake?.status !== "REJECTED" && currentStocktakeLine
+        ? currentStocktakeLine.openingStock
+        : prevLine?.physicalStock ?? material.currentStock
+      const ending = number(opening) + number(entry.incoming) - number(entry.outgoing)
+
+      const noFilter = stocktakeColumnFilters["_no"]?.trim().toLowerCase()
+      if (noFilter) {
+        const matchNo = String(originalIndex + 1).includes(noFilter)
+        const matchName = material.name.toLowerCase().includes(noFilter)
+        if (!matchNo && !matchName) return false
+      }
+
+      for (const field of orderedFields) {
+        const filterVal = stocktakeColumnFilters[field.id]?.trim().toLowerCase()
+        if (!filterVal) continue
+
+        let cellValue = ""
+        if (field.key === "ITEM") {
+          cellValue = `${material.name} ${material.unit}`
+        } else if (field.key === "OPENING") {
+          cellValue = formatQuantity(number(opening))
+        } else if (field.key === "INCOMING") {
+          cellValue = entry.incoming ?? "0"
+        } else if (field.key === "OUTGOING") {
+          cellValue = entry.outgoing ?? "0"
+        } else if (field.key === "ENDING") {
+          cellValue = formatQuantity(ending)
+        } else if (field.key === "PHYSICAL") {
+          cellValue = entry.physicalStock ?? ""
+        } else if (field.key === "NOTES") {
+          cellValue = entry.notes ?? ""
+        } else {
+          cellValue = entry.extraValues[field.id] ?? ""
+        }
+
+        if (!cellValue.toLowerCase().includes(filterVal)) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }, [activeMaterials, countEntries, currentStocktake, hasActiveStocktakeFilter, orderedFields, previousApprovedLines, stocktakeColumnFilters])
+
+  const hasActiveRequestFilter = useMemo(() => {
+    return Object.values(requestColumnFilters).some((val) => val.trim() !== "")
+  }, [requestColumnFilters])
+
+  const filteredRequestMaterials = useMemo(() => {
+    if (!hasActiveRequestFilter) return activeMaterials
+
+    return activeMaterials.filter((material) => {
+      const entry = requestEntries[material.id] ?? { amount: "", notes: "" }
+      
+      const itemFilter = requestColumnFilters["item"]?.trim().toLowerCase()
+      if (itemFilter && !`${material.name} ${material.unit}`.toLowerCase().includes(itemFilter)) {
+        return false
+      }
+
+      const stockFilter = requestColumnFilters["stock"]?.trim().toLowerCase()
+      if (stockFilter && !`${formatQuantity(number(material.currentStock))} ${material.unit}`.toLowerCase().includes(stockFilter)) {
+        return false
+      }
+
+      const amountFilter = requestColumnFilters["amount"]?.trim().toLowerCase()
+      if (amountFilter && !(entry.amount ?? "").toLowerCase().includes(amountFilter)) {
+        return false
+      }
+
+      const notesFilter = requestColumnFilters["notes"]?.trim().toLowerCase()
+      if (notesFilter && !(entry.notes ?? "").toLowerCase().includes(notesFilter)) {
+        return false
+      }
+
+      return true
+    })
+  }, [activeMaterials, hasActiveRequestFilter, requestColumnFilters, requestEntries])
+
+
   useEffect(() => {
     const existingLines = new Map(currentStocktake?.lines.map((line) => [line.rawMaterialId, line]) ?? [])
     const initial: Record<string, CountEntry> = {}
@@ -110,6 +210,10 @@ export function StockOpnameWorkspace({
   const changeStocktake = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError("")
+    if (stocktakeDate < today) {
+      setError("Tanggal opname minimal hari ini.")
+      return
+    }
     if (orderedFields.some((field) => field.key === "PHYSICAL") && activeMaterials.some((item) => !countEntries[item.id]?.physicalStock.trim())) {
       setError("Isi hitung fisik untuk setiap bahan aktif, termasuk yang stoknya nol.")
       return
@@ -293,7 +397,25 @@ export function StockOpnameWorkspace({
         <section className="space-y-5">
           <div className="flex flex-col gap-3 rounded-xl border border-[#e5e7eb] bg-white p-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-wrap gap-3">
-              <label className="grid gap-1 text-xs font-semibold text-[#6b7280]">Tanggal<input type="date" value={stocktakeDate} onChange={(event) => setStocktakeDate(event.target.value)} disabled={outletRequired} className="h-10 rounded-lg border border-[#e5e7eb] px-3 text-sm text-[#111827]" /></label>
+              <label className="grid gap-1 text-xs font-semibold text-[#6b7280]">
+                Tanggal
+                <input
+                  type="date"
+                  min={today}
+                  value={stocktakeDate}
+                  onChange={(event) => {
+                    const val = event.target.value
+                    setStocktakeDate(val)
+                    if (val && val < today) {
+                      setError("Tanggal opname minimal hari ini.")
+                    } else if (error === "Tanggal opname minimal hari ini.") {
+                      setError("")
+                    }
+                  }}
+                  disabled={outletRequired}
+                  className="h-10 rounded-lg border border-[#e5e7eb] px-3 text-sm text-[#111827]"
+                />
+              </label>
               <label className="grid gap-1 text-xs font-semibold text-[#6b7280]">Shift<select value={shift} onChange={(event) => setShift(event.target.value as Shift)} disabled={outletRequired} className="h-10 rounded-lg border border-[#e5e7eb] bg-white px-3 text-sm text-[#111827]"><option value="MORNING">Pagi</option><option value="AFTERNOON">Sore</option></select></label>
             </div>
             {currentStocktake && <StatusBadge status={currentStocktake.status} />}
@@ -306,32 +428,146 @@ export function StockOpnameWorkspace({
               {currentStocktake?.status === "REJECTED" && <Notice tone="amber">Opname sebelumnya ditolak: {currentStocktake.reviewNotes}. Perbarui hitungan lalu kirim ulang.</Notice>}
               {currentStocktake?.status === "APPROVED" && <Notice tone="green">Disetujui oleh {currentStocktake.reviewedByName || "Admin"}. Stok bahan sudah diperbarui.</Notice>}
               {currentStocktake?.status === "SUBMITTED" && <Notice tone="blue">Menunggu persetujuan Admin. Stok master belum berubah.</Notice>}
+              {hasActiveStocktakeFilter && (
+                <div className="flex items-center justify-between border-b border-[#e5e7eb] bg-amber-50/70 px-4 py-2 text-xs text-amber-900">
+                  <span>
+                    Menampilkan <strong>{filteredStocktakeMaterials.length}</strong> dari <strong>{activeMaterials.length}</strong> item bahan
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setStocktakeColumnFilters({})}
+                    className="inline-flex items-center gap-1 font-semibold text-amber-800 hover:text-amber-950 underline text-xs"
+                  >
+                    <X size={13} /> Reset Filter Kolom
+                  </button>
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1050px] border-collapse text-left text-xs">
-                  <thead className="bg-[#f9fafb] text-[10px] uppercase tracking-wider text-[#6b7280]"><tr><th className="w-12 border-b px-3 py-3 text-center">{orderedFields.some((field) => field.key === "ITEM") ? "No" : "No / Item"}</th>{orderedFields.map((field) => <th key={field.id} className="border-b px-3 py-3">{field.label}{field.isCore && <span className="ml-1 text-[#9ca3af]">•</span>}</th>)}</tr></thead>
+                  <thead className="bg-[#f9fafb] text-[10px] uppercase tracking-wider text-[#6b7280]">
+                    <tr>
+                      <th className="w-12 border-b px-3 py-3 text-center">{orderedFields.some((field) => field.key === "ITEM") ? "No" : "No / Item"}</th>
+                      {orderedFields.map((field) => <th key={field.id} className="border-b px-3 py-3">{field.label}{field.isCore && <span className="ml-1 text-[#9ca3af]">•</span>}</th>)}
+                    </tr>
+                    <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
+                      <th className="px-2 py-2 text-center align-middle">
+                        {!orderedFields.some((field) => field.key === "ITEM") ? (
+                          <input
+                            type="text"
+                            placeholder="Filter item..."
+                            value={stocktakeColumnFilters["_no"] ?? ""}
+                            onChange={(event) =>
+                              setStocktakeColumnFilters((prev) => ({
+                                ...prev,
+                                _no: event.target.value,
+                              }))
+                            }
+                            className="h-8 w-full min-w-28 rounded-md border border-[#e5e7eb] bg-white px-2 text-xs font-normal normal-case text-[#111827] placeholder:text-[#9ca3af] focus:border-[#FFB800] focus:outline-none focus:ring-1 focus:ring-[#FFB800]"
+                          />
+                        ) : hasActiveStocktakeFilter ? (
+                          <button
+                            type="button"
+                            onClick={() => setStocktakeColumnFilters({})}
+                            title="Reset semua filter kolom"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                          >
+                            <X size={13} />
+                          </button>
+                        ) : (
+                          <Filter size={13} className="mx-auto text-[#9ca3af]" />
+                        )}
+                      </th>
+                      {orderedFields.map((field) => (
+                        <th key={field.id} className="min-w-32 px-3 py-2 font-normal">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder={
+                                field.key === "ITEM"
+                                  ? "Filter item..."
+                                  : field.key === "OPENING"
+                                  ? "Filter stok..."
+                                  : field.key === "INCOMING"
+                                  ? "Filter masuk..."
+                                  : field.key === "OUTGOING"
+                                  ? "Filter keluar..."
+                                  : field.key === "ENDING"
+                                  ? "Filter akhir..."
+                                  : field.key === "PHYSICAL"
+                                  ? "Filter fisik..."
+                                  : field.key === "NOTES"
+                                  ? "Filter catatan..."
+                                  : `Filter ${field.label}...`
+                              }
+                              value={stocktakeColumnFilters[field.id] ?? ""}
+                              onChange={(event) =>
+                                setStocktakeColumnFilters((prev) => ({
+                                  ...prev,
+                                  [field.id]: event.target.value,
+                                }))
+                              }
+                              className="h-8 w-full rounded-md border border-[#e5e7eb] bg-white px-2.5 pr-6 text-xs font-normal normal-case text-[#111827] placeholder:text-[#9ca3af] focus:border-[#FFB800] focus:outline-none focus:ring-1 focus:ring-[#FFB800]"
+                            />
+                            {stocktakeColumnFilters[field.id] && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setStocktakeColumnFilters((prev) => {
+                                    const next = { ...prev }
+                                    delete next[field.id]
+                                    return next
+                                  })
+                                }
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#4b5563]"
+                              >
+                                <X size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
                   <tbody>
-                    {activeMaterials.map((material, index) => {
-                      const entry = countEntries[material.id] ?? { incoming: "0", outgoing: "0", physicalStock: "", notes: "", extraValues: {} }
-                      const currentStocktakeLine = currentStocktake?.lines.find((line) => line.rawMaterialId === material.id)
-                      const previous = [...stocktakes].filter((item) => item.status === "APPROVED" && (item.date < stocktakeDate || (shift === "AFTERNOON" && item.date === stocktakeDate && item.shift === "MORNING"))).sort((a, b) => b.date.localeCompare(a.date) || b.submittedAt.localeCompare(a.submittedAt))[0]?.lines.find((line) => line.rawMaterialId === material.id)
-                      const opening = currentStocktake?.status !== "REJECTED" && currentStocktakeLine
-                        ? currentStocktakeLine.openingStock
-                        : previous?.physicalStock ?? material.currentStock
-                      const ending = number(opening) + number(entry.incoming) - number(entry.outgoing)
-                      return <tr key={material.id} className="border-b last:border-0">
-                        <td className="px-3 py-3 text-center text-[#9ca3af]">{orderedFields.some((field) => field.key === "ITEM") ? index + 1 : <><span>{index + 1}</span><span className="mt-1 block font-semibold text-[#111827]">{material.name}</span></>}</td>
-                        {orderedFields.map((field) => <td key={field.id} className="min-w-32 px-3 py-2.5">
-                          {field.key === "ITEM" ? <div><p className="font-semibold text-[#111827]">{material.name}</p><p className="mt-0.5 text-[10px] text-[#9ca3af]">Satuan: {material.unit}</p></div>
-                            : field.key === "OPENING" ? <Quantity>{formatQuantity(number(opening))}</Quantity>
-                            : field.key === "INCOMING" ? <input aria-label={`${field.label} ${material.name}`} type="number" min="0" step="0.001" value={entry.incoming} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "incoming", event.target.value)} className="h-9 w-28 rounded-md border border-[#e5e7eb] px-2 text-right disabled:bg-gray-50" />
-                            : field.key === "OUTGOING" ? <input aria-label={`${field.label} ${material.name}`} type="number" min="0" step="0.001" value={entry.outgoing} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "outgoing", event.target.value)} className="h-9 w-28 rounded-md border border-[#e5e7eb] px-2 text-right disabled:bg-gray-50" />
-                            : field.key === "ENDING" ? <Quantity strong>{formatQuantity(ending)}</Quantity>
-                            : field.key === "PHYSICAL" ? <input aria-label={`${field.label} ${material.name}`} type="number" min="0" step="0.001" value={entry.physicalStock} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "physicalStock", event.target.value)} placeholder="Hitung fisik" className="h-9 w-28 rounded-md border border-[#e5e7eb] px-2 text-right disabled:bg-gray-50" />
-                            : field.key === "NOTES" ? <input aria-label={`${field.label} ${material.name}`} value={entry.notes} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "notes", event.target.value)} placeholder="Catatan" className="h-9 w-36 rounded-md border border-[#e5e7eb] px-2 disabled:bg-gray-50" />
-                            : <input aria-label={`${field.label} ${material.name}`} type={field.type === "NUMBER" ? "number" : "text"} step={field.type === "NUMBER" ? "0.001" : undefined} value={entry.extraValues[field.id] ?? ""} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "extraValues", event.target.value, field.id)} className="h-9 w-32 rounded-md border border-[#e5e7eb] px-2 disabled:bg-gray-50" />}
-                        </td>)}
+                    {filteredStocktakeMaterials.length === 0 ? (
+                      <tr>
+                        <td colSpan={orderedFields.length + 1} className="px-4 py-8 text-center text-xs text-[#9ca3af]">
+                          Tidak ada item bahan yang sesuai filter.
+                          {hasActiveStocktakeFilter && (
+                            <button
+                              type="button"
+                              onClick={() => setStocktakeColumnFilters({})}
+                              className="ml-2 font-semibold text-[#FFB800] hover:underline"
+                            >
+                              Reset Filter
+                            </button>
+                          )}
+                        </td>
                       </tr>
-                    })}
+                    ) : (
+                      filteredStocktakeMaterials.map((material, index) => {
+                        const entry = countEntries[material.id] ?? { incoming: "0", outgoing: "0", physicalStock: "", notes: "", extraValues: {} }
+                        const currentStocktakeLine = currentStocktake?.lines.find((line) => line.rawMaterialId === material.id)
+                        const prevLine = previousApprovedLines.get(material.id)
+                        const opening = currentStocktake?.status !== "REJECTED" && currentStocktakeLine
+                          ? currentStocktakeLine.openingStock
+                          : prevLine?.physicalStock ?? material.currentStock
+                        const ending = number(opening) + number(entry.incoming) - number(entry.outgoing)
+                        return <tr key={material.id} className="border-b last:border-0 hover:bg-gray-50/50">
+                          <td className="px-3 py-3 text-center text-[#9ca3af]">{orderedFields.some((field) => field.key === "ITEM") ? index + 1 : <><span>{index + 1}</span><span className="mt-1 block font-semibold text-[#111827]">{material.name}</span></>}</td>
+                          {orderedFields.map((field) => <td key={field.id} className="min-w-32 px-3 py-2.5">
+                            {field.key === "ITEM" ? <div><p className="font-semibold text-[#111827]">{material.name}</p><p className="mt-0.5 text-[10px] text-[#9ca3af]">Satuan: {material.unit}</p></div>
+                              : field.key === "OPENING" ? <Quantity>{formatQuantity(number(opening))}</Quantity>
+                              : field.key === "INCOMING" ? <input aria-label={`${field.label} ${material.name}`} type="number" min="0" step="0.001" value={entry.incoming} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "incoming", event.target.value)} className="h-9 w-28 rounded-md border border-[#e5e7eb] px-2 text-right disabled:bg-gray-50" />
+                              : field.key === "OUTGOING" ? <input aria-label={`${field.label} ${material.name}`} type="number" min="0" step="0.001" value={entry.outgoing} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "outgoing", event.target.value)} className="h-9 w-28 rounded-md border border-[#e5e7eb] px-2 text-right disabled:bg-gray-50" />
+                              : field.key === "ENDING" ? <Quantity strong>{formatQuantity(ending)}</Quantity>
+                              : field.key === "PHYSICAL" ? <input aria-label={`${field.label} ${material.name}`} type="number" min="0" step="0.001" value={entry.physicalStock} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "physicalStock", event.target.value)} placeholder="Hitung fisik" className="h-9 w-28 rounded-md border border-[#e5e7eb] px-2 text-right disabled:bg-gray-50" />
+                              : field.key === "NOTES" ? <input aria-label={`${field.label} ${material.name}`} value={entry.notes} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "notes", event.target.value)} placeholder="Catatan" className="h-9 w-36 rounded-md border border-[#e5e7eb] px-2 disabled:bg-gray-50" />
+                              : <input aria-label={`${field.label} ${material.name}`} type={field.type === "NUMBER" ? "number" : "text"} step={field.type === "NUMBER" ? "0.001" : undefined} value={entry.extraValues[field.id] ?? ""} disabled={!editableStocktake || outletRequired} onChange={(event) => updateCount(material.id, "extraValues", event.target.value, field.id)} className="h-9 w-32 rounded-md border border-[#e5e7eb] px-2 disabled:bg-gray-50" />}
+                          </td>)}
+                        </tr>
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -357,7 +593,117 @@ export function StockOpnameWorkspace({
             </div>
             {currentRequest && <div className="px-4 pt-4"><StatusBadge status={currentRequest.status} />{currentRequest.reviewNotes && <p className="mt-2 text-xs text-amber-800">Catatan Admin: {currentRequest.reviewNotes}</p>}</div>}
             {activeMaterials.length === 0 ? <div className="p-5"><Empty title="Master item masih kosong" body="Tambahkan bahan baku pada tab Item & Kolom sebelum membuat permintaan." /></div> : <>
-              <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="bg-[#f9fafb] text-[10px] uppercase tracking-wider text-[#6b7280]"><tr><th className="px-4 py-3">Item</th><th className="px-4 py-3">Saldo tersedia</th><th className="px-4 py-3">Jumlah diminta</th><th className="px-4 py-3">Catatan</th></tr></thead><tbody>{activeMaterials.map((material) => <tr key={material.id} className="border-t"><td className="px-4 py-3 font-semibold text-[#111827]">{material.name}<span className="ml-1 text-xs font-normal text-[#9ca3af]">({material.unit})</span></td><td className="px-4 py-3 text-[#6b7280]">{formatQuantity(number(material.currentStock))} {material.unit}</td><td className="px-4 py-3"><input type="number" step="0.001" min="0" value={requestEntries[material.id]?.amount ?? ""} disabled={!editableRequest || outletRequired} onChange={(event) => setRequestEntries((old) => ({ ...old, [material.id]: { ...(old[material.id] ?? { amount: "", notes: "" }), amount: event.target.value } }))} className="h-9 w-32 rounded-md border border-[#e5e7eb] px-2 disabled:bg-gray-50" placeholder="0" /></td><td className="px-4 py-3"><input value={requestEntries[material.id]?.notes ?? ""} disabled={!editableRequest || outletRequired} onChange={(event) => setRequestEntries((old) => ({ ...old, [material.id]: { ...(old[material.id] ?? { amount: "", notes: "" }), notes: event.target.value } }))} className="h-9 w-full min-w-44 rounded-md border border-[#e5e7eb] px-2 disabled:bg-gray-50" placeholder="Opsional" /></td></tr>)}</tbody></table></div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-left text-sm">
+                  <thead className="bg-[#f9fafb] text-[10px] uppercase tracking-wider text-[#6b7280]">
+                    <tr>
+                      <th className="px-4 py-3">Item</th>
+                      <th className="px-4 py-3">Saldo tersedia</th>
+                      <th className="px-4 py-3">Jumlah diminta</th>
+                      <th className="px-4 py-3">Catatan</th>
+                    </tr>
+                    <tr className="border-b border-[#e5e7eb] bg-[#f9fafb]">
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter item..."
+                          value={requestColumnFilters["item"] ?? ""}
+                          onChange={(e) => setRequestColumnFilters((p) => ({ ...p, item: e.target.value }))}
+                          className="h-8 w-full rounded-md border border-[#e5e7eb] bg-white px-2.5 text-xs font-normal normal-case text-[#111827] placeholder:text-[#9ca3af] focus:border-[#FFB800] focus:outline-none"
+                        />
+                      </th>
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter saldo..."
+                          value={requestColumnFilters["stock"] ?? ""}
+                          onChange={(e) => setRequestColumnFilters((p) => ({ ...p, stock: e.target.value }))}
+                          className="h-8 w-full rounded-md border border-[#e5e7eb] bg-white px-2.5 text-xs font-normal normal-case text-[#111827] placeholder:text-[#9ca3af] focus:border-[#FFB800] focus:outline-none"
+                        />
+                      </th>
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter diminta..."
+                          value={requestColumnFilters["amount"] ?? ""}
+                          onChange={(e) => setRequestColumnFilters((p) => ({ ...p, amount: e.target.value }))}
+                          className="h-8 w-full rounded-md border border-[#e5e7eb] bg-white px-2.5 text-xs font-normal normal-case text-[#111827] placeholder:text-[#9ca3af] focus:border-[#FFB800] focus:outline-none"
+                        />
+                      </th>
+                      <th className="px-4 py-2">
+                        <input
+                          type="text"
+                          placeholder="Filter catatan..."
+                          value={requestColumnFilters["notes"] ?? ""}
+                          onChange={(e) => setRequestColumnFilters((p) => ({ ...p, notes: e.target.value }))}
+                          className="h-8 w-full rounded-md border border-[#e5e7eb] bg-white px-2.5 text-xs font-normal normal-case text-[#111827] placeholder:text-[#9ca3af] focus:border-[#FFB800] focus:outline-none"
+                        />
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRequestMaterials.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-xs text-[#9ca3af]">
+                          Tidak ada item bahan yang sesuai filter.
+                          {hasActiveRequestFilter && (
+                            <button
+                              type="button"
+                              onClick={() => setRequestColumnFilters({})}
+                              className="ml-2 font-semibold text-[#FFB800] hover:underline"
+                            >
+                              Reset Filter
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRequestMaterials.map((material) => (
+                        <tr key={material.id} className="border-t hover:bg-gray-50/50">
+                          <td className="px-4 py-3 font-semibold text-[#111827]">
+                            {material.name}
+                            <span className="ml-1 text-xs font-normal text-[#9ca3af]">({material.unit})</span>
+                          </td>
+                          <td className="px-4 py-3 text-[#6b7280]">
+                            {formatQuantity(number(material.currentStock))} {material.unit}
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              type="number"
+                              step="0.001"
+                              min="0"
+                              value={requestEntries[material.id]?.amount ?? ""}
+                              disabled={!editableRequest || outletRequired}
+                              onChange={(event) =>
+                                setRequestEntries((old) => ({
+                                  ...old,
+                                  [material.id]: { ...(old[material.id] ?? { amount: "", notes: "" }), amount: event.target.value },
+                                }))
+                              }
+                              className="h-9 w-32 rounded-md border border-[#e5e7eb] px-2 disabled:bg-gray-50"
+                              placeholder="0"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <input
+                              value={requestEntries[material.id]?.notes ?? ""}
+                              disabled={!editableRequest || outletRequired}
+                              onChange={(event) =>
+                                setRequestEntries((old) => ({
+                                  ...old,
+                                  [material.id]: { ...(old[material.id] ?? { amount: "", notes: "" }), notes: event.target.value },
+                                }))
+                              }
+                              className="h-9 w-full min-w-44 rounded-md border border-[#e5e7eb] px-2 disabled:bg-gray-50"
+                              placeholder="Opsional"
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
               <div className="flex flex-col gap-3 border-t bg-[#f9fafb] p-4 sm:flex-row sm:items-end sm:justify-between"><label className="grid w-full max-w-xl gap-1 text-xs font-semibold text-[#6b7280]">Catatan permintaan<textarea value={requestNotes} onChange={(event) => setRequestNotes(event.target.value)} disabled={!editableRequest || outletRequired} rows={2} className="rounded-lg border border-[#e5e7eb] bg-white p-2.5 text-sm font-normal text-[#111827]" placeholder="Alasan atau kebutuhan khusus" /></label><div className="flex gap-2"><button type="button" onClick={() => void persistRequest(false)} disabled={busy || outletRequired || !editableRequest} className="inline-flex h-10 items-center gap-2 rounded-lg border border-[#d1d5db] bg-white px-4 text-sm font-semibold text-[#374151] disabled:opacity-40"><Save size={15} />Simpan Draft</button><button type="submit" disabled={busy || outletRequired || !editableRequest} className="h-10 rounded-lg bg-[#111827] px-4 text-sm font-semibold text-white disabled:opacity-40">Kirim ke Admin</button></div></div>
             </>}
           </form>

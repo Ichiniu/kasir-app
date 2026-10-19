@@ -1,0 +1,107 @@
+{
+  "name": "Workflow Casir - Recovery Guard",
+  "nodes": [
+    {
+      "id": "casir-recovery-timer",
+      "name": "Periksa Setiap Menit",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "casir-recovery-maintain",
+      "name": "Rapikan dan Tandai Proses Macet",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        300,
+        0
+      ],
+      "retryOnFail": false,
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT CASE WHEN\n current_setting('transaction_read_only')='off'\n AND (SELECT setting::integer FROM pg_settings WHERE name='statement_timeout') BETWEEN 1 AND 3000\n AND (SELECT setting::integer FROM pg_settings WHERE name='lock_timeout') BETWEEN 1 AND 1000\n AND EXISTS(SELECT 1 FROM pg_roles WHERE rolname=current_user AND NOT rolsuper AND rolconnlimit BETWEEN 1 AND 6)\n THEN casir_control.maintenance()\n ELSE jsonb_build_object('allowed',false,'httpStatus',503,'blocked',true,'reason','UNSAFE_CONTROL_ROLE')\n END AS status;",
+        "options": {
+          "connectionTimeout": 3,
+          "delayClosingIdleConnection": 0
+        }
+      },
+      "notes": "Credential casir_automation wajib. Role statement_timeout 3s, lock_timeout 1s. Tidak mengirim ulang atau mengakses POS."
+    },
+    {
+      "id": "casir-recovery-check",
+      "name": "Butuh Pemeriksaan?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        600,
+        0
+      ],
+      "parameters": {
+        "jsCode": "if ($json.status?.blocked === true || Number($json.status?.needsReview)>0) throw new Error(\"CASIR_REQUIRES_REVIEW: cek metadata kontrol; jangan retry pesan otomatis.\"); return [{json:{healthy:true}}];"
+      }
+    },
+    {
+      "id": "casir-recovery-note",
+      "name": "Petunjuk Recovery",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        230
+      ],
+      "parameters": {
+        "height": 280,
+        "width": 780,
+        "content": "## NONAKTIF sampai database kontrol siap\nSetiap menit menandai lease >180 detik sebagai REVIEW/UNKNOWN dan mengunci admission baru. Tidak mengulang AI/query/kirim. Retensi teks 1 jam, metadata 7 hari. Error hanya menunjukkan perlu pemeriksaan; bukan notifikasi eksternal. Baca resilience/OPERATIONS.txt untuk membuka penguncian setelah worker betul-betul berhenti."
+      }
+    }
+  ],
+  "connections": {
+    "Periksa Setiap Menit": {
+      "main": [
+        [
+          {
+            "node": "Rapikan dan Tandai Proses Macet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rapikan dan Tandai Proses Macet": {
+      "main": [
+        [
+          {
+            "node": "Butuh Pemeriksaan?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timezone": "Asia/Jakarta",
+    "executionTimeout": 15,
+    "saveExecutionProgress": false,
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "none",
+    "saveManualExecutions": false
+  }
+}

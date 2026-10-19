@@ -1,0 +1,10 @@
+const result=$json.result;
+const prepared=$('Siapkan Aksi Whitelist').first().json;
+let output=prepared.localMessage || result?.message;
+if(!output && Array.isArray(result?.outlets)) output='Outlet yang tersedia:\n'+result.outlets.map(o=>o.name+' ['+o.id+']').join('\n');
+if(!output && Array.isArray(result?.members)) {
+  const names=new Map(prepared.catalog.map(o=>[o.id,o.name]));
+  output=result.members.length ? 'Whitelist aktif:\n'+result.members.map(m=>m.phone+' — '+m.outlet_ids.map(id=>names.get(id)||id).join(', ')).join('\n') : 'Belum ada nomor tambahan di whitelist.';
+}
+if(typeof output!=='string' || !output) throw new Error('WHITELIST_RESULT_UNAVAILABLE');
+return [{json:{output,source:'system'}}];

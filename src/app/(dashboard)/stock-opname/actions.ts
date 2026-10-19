@@ -24,6 +24,16 @@ function parseDate(value: string) {
   return date
 }
 
+function getTodayDateString() {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" })
+      .formatToParts(new Date())
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  )
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
 function parseAmount(value: string | number, label: string, allowZero = true) {
   const raw = String(value).trim()
   if (!/^\d+(?:\.\d{1,3})?$/.test(raw)) throw new Error(`${label} harus berupa angka maksimal 3 desimal dan tidak boleh negatif`)
@@ -118,6 +128,10 @@ export async function restoreStocktakeField(id: string) {
 export async function submitStocktake(input: { date: string; shift: "MORNING" | "AFTERNOON"; notes?: string; lines: CountLineInput[] }) {
   const user = await requireOutletUser()
   if (input.shift !== "MORNING" && input.shift !== "AFTERNOON") throw new Error("Shift tidak valid")
+  const todayStr = getTodayDateString()
+  if (input.date < todayStr) {
+    throw new Error("Tanggal opname minimal hari ini")
+  }
   const date = parseDate(input.date)
   const materials = await prisma.rawMaterial.findMany({ where: { outletId: user.outletId!, isActive: true }, orderBy: { name: "asc" } })
   if (!materials.length) throw new Error("Tambahkan bahan baku aktif terlebih dahulu")
@@ -242,8 +256,8 @@ export async function reviewStocktake(input: { id: string; decision: "APPROVE" |
 export async function saveMaterialRequest(input: { forDate: string; notes?: string; submit: boolean; lines: RequestLineInput[] }) {
   const user = await requireOutletUser()
   const forDate = parseDate(input.forDate)
-  const dateParts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).filter((part) => part.type !== "literal").map((part) => [part.type, part.value]))
-  const tomorrow = new Date(Date.UTC(Number(dateParts.year), Number(dateParts.month) - 1, Number(dateParts.day) + 1))
+  const [year, month, day] = getTodayDateString().split("-").map(Number)
+  const tomorrow = new Date(Date.UTC(year, month - 1, day + 1))
   if (forDate.getTime() < tomorrow.getTime()) {
     throw new Error("Permintaan harus ditujukan untuk besok atau tanggal setelahnya")
   }

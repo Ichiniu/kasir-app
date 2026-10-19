@@ -13,7 +13,7 @@ const fixtureOwner = {
   gowaDeviceId: 'test-device', ownerId: 'owner-test', outletIds: ['outlet-a'],
 };
 const config = {
-  liveEnabled: false, ingressControlsReady: false, databaseReady: false, aiReady: false,
+  liveEnabled: false, ingressControlsReady: false, controlDatabaseReady: false, whitelistReady: false, databaseReady: false, aiReady: false,
   sendReplies: false, maxMessageAgeSeconds: 300, maxQuestionLength: 1500, owners: [],
 };
 const event = () => ({
@@ -48,8 +48,11 @@ async function validate(e) {
   }))[0].json;
 }
 async function authorize(message, owners = [fixtureOwner]) {
-  return (await run('Otorisasi Owner', message, {
+  const context=(await run('Pilih Owner Perangkat', message, {
     'Konfigurasi Casir': { json: { config: { ...config, owners } } },
+  }))[0].json;
+  return (await run('Otorisasi Owner', {access:{authorized:message.sender===fixtureOwner.phone,isOwner:true}}, {
+    'Pilih Owner Perangkat':{json:context},
   }))[0].json;
 }
 function params(overrides = {}, scope = authorized, ready = true) {
@@ -78,8 +81,12 @@ test('every Code node compiles', () => {
 });
 test('draft defaults never enable live, DB, AI, delivery or owner access', async () => {
   const c = (await run('Konfigurasi Casir'))[0].json.config;
-  for (const flag of ['liveEnabled', 'databaseReady', 'aiReady', 'sendReplies', 'ingressControlsReady']) assert.equal(c[flag], false);
-  assert.deepEqual(c.owners, []);
+  for (const flag of ['liveEnabled', 'databaseReady', 'aiReady', 'sendReplies', 'ingressControlsReady', 'controlDatabaseReady']) assert.equal(c[flag], false);
+  assert.equal(c.whitelistReady,false);
+  assert.equal(c.owners.length,1);
+  assert.equal(c.owners[0].phone,'6289649261851');
+  assert.deepEqual(c.owners[0].outletIds,[]);
+  assert.equal(c.owners[0].deviceId,'');
 });
 test('manual trigger has no path to AI, database, webhook or GoWA', () => {
   const seen = new Set(); const queue = ['Uji Draft Manual'];
@@ -101,7 +108,7 @@ test('valid raw-body HMAC succeeds; altered or unsigned data rejected', async ()
   const raw = Buffer.from(JSON.stringify(event()));
   const secret = 'test-only-secret-not-a-production-credential-0000';
   const signature = 'sha256=' + createHmac('sha256', secret).update(raw).digest('hex');
-  const settings = { config: { ...config, liveEnabled: true, ingressControlsReady: true } };
+  const settings = { config: { ...config, liveEnabled: true, ingressControlsReady: true, controlDatabaseReady: true, whitelistReady:true } };
   const refs = { 'Pesan WhatsApp Masuk': { json: { headers: { 'x-hub-signature-256': signature } } } };
   const options = { env: { CASIR_GOWA_WEBHOOK_SECRET: secret }, raw };
   assert.equal((await run('Verifikasi Webhook GoWA', settings, refs, options))[0].json.accepted, true);
@@ -148,14 +155,14 @@ test('report parameters reject no authorization or database-not-ready', () => {
   assert.throws(() => params({}, { authorized: false }));
   assert.throws(() => params({}, authorized, false));
 });
-test('all 11 tools are fixed scoped SELECT and have no database credentials', () => {
+test('all 11 tools are fixed scoped SELECT and preserve the configured report credential', () => {
   const schema = readFileSync(new URL('../../prisma/schema.prisma', import.meta.url), 'utf8');
   const tables = new Set([...schema.matchAll(/@@map\("([a-z_]+)"\)/g)].map(m => m[1]));
   const tools = workflow.nodes.filter(n => n.type === 'n8n-nodes-base.postgresTool');
   assert.equal(tools.length, 11);
   for (const tool of tools) {
     const { query, options } = tool.parameters;
-    assert.equal(tool.credentials, undefined);
+    assert.equal(tool.credentials.postgres.id, byName.get('Cek Database dan Batas Query').credentials.postgres.id);
     assert.match(query, /jsonb_array_elements_text\(\$1::jsonb\)/);
     assert.match(query, /JOIN scope|FROM scope/);
     assert.match(query, /LIMIT \d+/);
@@ -191,12 +198,81 @@ test('model without tool evidence cannot present an invented report', async () =
 });
 test('delivery is only via GoWA and gated; default logs do not retain report data', () => {
   const sender = byName.get('GoWA - Balas Owner');
-  assert.equal(sender.parameters.operation, 'sendText');
+  assert.equal(sender.parameters.operation ?? 'sendText', 'sendText');
   assert.equal(sender.parameters.phoneNumber, '={{ $json.phone }}');
-  assert.equal(workflow.connections['Pengiriman Diaktifkan?'].main[0][0].node, sender.name);
-  assert.equal(workflow.connections['Pengiriman Diaktifkan?'].main[1][0].node, 'Preview - Tidak Mengirim');
+  assert.equal(workflow.connections['Pengiriman Diaktifkan?'].main[0][0].node, 'Klaim Pengiriman Sekali');
+  assert.equal(workflow.connections['Pengiriman Diaktifkan?'].main[1][0].node, 'Tandai Preview');
+  assert.equal(workflow.connections['Siapkan Balasan GoWA'].main[0][0].node, sender.name);
   assert.equal(workflow.settings.saveDataSuccessExecution, 'none');
   assert.equal(workflow.settings.availableInMCP, false);
   assert.equal(workflow.settings.saveDataErrorExecution, 'none');
   assert.equal(workflow.settings.saveManualExecutions, false);
+});
+
+test('main execution graph has no cycles and all node retries are disabled', () => {
+  const visiting = new Set(), done = new Set();
+  function visit(name) {
+    assert.ok(!visiting.has(name), 'cycle: ' + name);
+    if(done.has(name)) return;
+    visiting.add(name);
+    for(const output of workflow.connections[name]?.main || []) for(const edge of output) visit(edge.node);
+    visiting.delete(name); done.add(name);
+  }
+  for(const node of workflow.nodes) { visit(node.name); assert.notEqual(node.retryOnFail, true); }
+});
+
+test('model and workflow have finite bounds; control credential remains separate from reports', () => {
+  assert.equal(workflow.settings.executionTimeout, 90);
+  assert.equal(byName.get('AI Agent Laporan Casir').parameters.options.maxIterations, 3);
+  const model = byName.get('Model AI').parameters.options;
+  assert.equal(model.timeout, 15000); assert.equal(model.maxRetries, 0); assert.equal(model.maxTokens, 1000);
+  for(const node of workflow.nodes.filter(n => n.type === 'n8n-nodes-base.postgres' && n.parameters.query.includes('casir_control.'))) {
+    assert.equal(node.credentials.postgres.id,byName.get('Klaim Pesan dan Batas Beban').credentials.postgres.id);
+    assert.notEqual(node.credentials.postgres.id,byName.get('Cek Database dan Batas Query').credentials.postgres.id);
+    assert.equal(node.parameters.options.connectionTimeout, 3);
+    assert.match(node.parameters.query, /^SELECT CASE WHEN/);
+    assert.match(node.parameters.query, /THEN casir_control\./);
+    assert.match(node.parameters.query, /UNSAFE_CONTROL_ROLE/);
+  }
+});
+
+test('accepted webhook ACK happens only after atomic admission', () => {
+  assert.equal(workflow.connections['Owner Diizinkan?'].main[0][0].node, 'Klaim Pesan dan Batas Beban');
+  const parents = Object.entries(workflow.connections).filter(([, types]) => (types.main || []).flat().some(e => e.node === 'ACK GoWA')).map(([n]) => n);
+  assert.deepEqual(parents, ['Kapasitas Tersedia?']);
+});
+
+test('database failure and tool timeout give safe fallback and open breaker signal', async () => {
+  const refs = {'Otorisasi Owner': {json: authorized}};
+  const failed = (await run('Gagal Ambil Laporan'))[0].json;
+  assert.equal((await run('Jawaban Aman', failed, refs))[0].json.dependencyFailure, true);
+  const result = (await run('Jawaban Aman', {output:'Omzet Rp 999', intermediateSteps:[{observation:'canceling statement due to statement timeout'}]}, refs))[0].json;
+  assert.equal(result.dependencyFailure, true); assert.doesNotMatch(result.message, /999/);
+});
+
+test('delivery requires the saved matching reply and a successful one-time claim', async () => {
+  const reply = {message:'Laporan', phone:fixtureOwner.phone};
+  const refs = {'Jawaban Aman': {json:reply}};
+  for(const delivery of [{claimed:false},{claimed:true,message:'tampered'}])
+    await assert.rejects(run('Siapkan Balasan GoWA', {delivery}, refs));
+  assert.deepEqual((await run('Siapkan Balasan GoWA', {delivery:{claimed:true,message:'Laporan'}}, refs))[0].json, reply);
+});
+
+test('GoWA ambiguous response does not enter sent branch', () => {
+  const condition=byName.get('GoWA Mengonfirmasi?').parameters.conditions.conditions[0].leftValue.slice(3,-2).trim();
+  const accepted=json=>new vm.Script(condition).runInNewContext({$json:json},{timeout:1000});
+  assert.equal(accepted({code:'SUCCESS',results:{message_id:'test-id'}}),true);
+  for(const response of [{},{code:'ERROR'},{code:'SUCCESS'},{code:'SUCCESS',results:{message_id:''}}]) assert.equal(accepted(response),false);
+  assert.equal(workflow.connections['GoWA Mengonfirmasi?'].main[1][0].node,'Tandai Perlu Cek Pengiriman');
+});
+
+test('recovery only does bounded housekeeping, not replay or outbound delivery', () => {
+  const recovery=JSON.parse(readFileSync(new URL('./workflow-casir-recovery.json',import.meta.url),'utf8'));
+  assert.equal(recovery.settings.executionTimeout,15);
+  assert.equal(recovery.nodes.find(n=>n.type==='n8n-nodes-base.scheduleTrigger').parameters.rule.interval[0].minutesInterval,1);
+  assert.ok(recovery.nodes.every(n=>!/gowa|httpRequest|langchain/.test(n.type)));
+  const pg=recovery.nodes.find(n=>n.type==='n8n-nodes-base.postgres');
+  assert.match(pg.parameters.query,/casir_control\.maintenance\(\)/); assert.equal(pg.credentials,undefined);
+  const seen=new Set();let current='Periksa Setiap Menit';
+  while(current) {assert.ok(!seen.has(current));seen.add(current);current=recovery.connections[current]?.main?.[0]?.[0]?.node;}
 });

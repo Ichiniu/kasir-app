@@ -1,0 +1,12 @@
+const context = $('Pilih Owner Perangkat').first().json;
+const access = $json.access;
+const deny = () => [{json:{authorized:false,reason:'SENDER_NOT_AUTHORIZED'}}];
+if (!context.knownDevice || access?.authorized !== true) return deny();
+const {owner,message} = context;
+const isOwner = message.sender === owner.phone && access.isOwner === true;
+if (access.isOwner === true && !isOwner) return deny();
+const scope = isOwner ? owner.outletIds : (Array.isArray(access.outletIds) ? access.outletIds : []).filter(id => owner.outletIds.includes(id));
+if (!scope.length) return deny();
+return [{json:{authorized:true,isOwner,question:message.question,sender:message.sender,
+  deviceId:owner.deviceId,gowaDeviceId:owner.gowaDeviceId,ownerId:owner.ownerId,
+  allowedOutletIds:[...new Set(scope)],messageId:message.messageId,receivedAt:message.receivedAt}}];

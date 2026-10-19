@@ -1,0 +1,23 @@
+# Install on a DIFFERENT host. One replica only. Never commit webhook credentials.
+services:
+  casir-monitor:
+    image: node:22-alpine
+    working_dir: /app
+    command: ["node", "monitor.mjs"]
+    restart: "on-failure:3"
+    read_only: true
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 32
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      N8N_READINESS_URL: ${N8N_READINESS_URL:?Set HTTPS n8n readiness endpoint}
+      CASIR_HEALTH_URL: ${CASIR_HEALTH_URL:?Set HTTPS Casir health endpoint}
+      INDEPENDENT_ALERT_WEBHOOK: ${INDEPENDENT_ALERT_WEBHOOK:?Set independent alert receiver}
+      MONITOR_STATE_FILE: /state/monitor.json
+    volumes:
+      - ./monitor.mjs:/app/monitor.mjs:ro
+      - monitor-state:/state
+volumes:
+  monitor-state:

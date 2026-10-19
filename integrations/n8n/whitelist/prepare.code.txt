@@ -1,0 +1,17 @@
+const actor = $('Otorisasi Owner').first().json;
+if (actor.isOwner !== true) throw new Error('OWNER_ONLY');
+const command = $('Baca Perintah Whitelist').first().json.command;
+const catalog = Array.isArray($json.outlets) ? $json.outlets : [];
+if (catalog.some(o=>!actor.allowedOutletIds.includes(o.id)) || catalog.length>20) throw new Error('INVALID_OUTLET_SCOPE');
+let action=command.action, outletIds=[], localMessage='';
+if (action==='add') {
+  if (!command.outletSelectors.length || command.outletSelectors.length>20) localMessage='Pilih 1 sampai 20 outlet secara jelas. Ketik daftar outlet untuk melihat ID dan nama.';
+  for (const selector of command.outletSelectors) {
+    const exact = catalog.filter(o=>o.id===selector);
+    const matches = exact.length ? exact : catalog.filter(o=>o.name.toLocaleLowerCase('id-ID')===selector.toLocaleLowerCase('id-ID'));
+    if(matches.length!==1) {localMessage='Outlet tidak ditemukan atau namanya ambigu: '+selector+'. Ketik daftar outlet, lalu gunakan ID outlet.';break;}
+    outletIds.push(matches[0].id);
+  }
+  if(localMessage) action='help';
+}
+return [{json:{action,target:command.target,outletIds:[...new Set(outletIds)],code:command.code,catalog,localMessage}}];

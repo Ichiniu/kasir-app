@@ -1,0 +1,15 @@
+const actor = $('Otorisasi Owner').first().json;
+const text = actor.question.trim();
+let command = {action:'help',target:'',outletSelectors:[],code:''};
+let match;
+if ((match=text.match(/^tambah\s+whitelist\s+(\+?[1-9][0-9]{7,14})\s+untuk\s+outlet\s+(.+)$/i))) {
+  command={...command,action:'add',target:match[1].replace(/^\+/,''),outletSelectors:match[2].split(',').map(s=>s.trim()).filter(Boolean)};
+} else if ((match=text.match(/^hapus\s+whitelist\s+(\+?[1-9][0-9]{7,14})$/i))) {
+  command={...command,action:'remove',target:match[1].replace(/^\+/, '')};
+} else if (/^lihat\s+whitelist$/i.test(text)) command.action='list';
+else if (/^daftar\s+outlet$/i.test(text)) command.action='outlets';
+else if ((match=text.match(/^(konfirmasi|batal)\s+([a-f0-9]{12})$/i))) {
+  command.action=match[1].toLowerCase()==='konfirmasi'?'confirm':'cancel'; command.code=match[2].toUpperCase();
+}
+const isManagement = command.action!=='help' || /\bwhitelist\b|^(konfirmasi|batal)\b/i.test(text);
+return [{json:{isManagement,denied:isManagement && actor.isOwner!==true,command}}];

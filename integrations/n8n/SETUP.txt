@@ -1,106 +1,69 @@
-WORKFLOW CASIR — DRAFT / DATABASE BELUM DIHUBUNGKAN
+WORKFLOW CASIR — HARDENING DRAFT
 
-Target: https://n8n.ichsanlab.web.id/workflow/RogxKimgZh9ITEjW
-File workflow-casir.json adalah body workflow public API sekaligus ekspor yang bisa diimpor.
-Tidak mengandung API key n8n, password database, webhook secret, atau nomor owner asli.
-Credential yang direferensikan hanya ID/nama model dan GoWA yang sudah ada pada instance.
-Tidak ada credential PostgreSQL terpasang pada 11 tool laporan.
+UPDATE 14 OKTOBER: pengelolaan whitelist oleh owner ditambahkan sebagai draft.
+Baca whitelist/SETUP.txt dan jalankan resilience/whitelist-schema.sql di n8n_kasir.
+Nomor owner 6289649261851 sudah disiapkan; device/session dan outletIds masih perlu
+diisi. Node kontrol mempertahankan credential yang telah dipasang pengguna.
+Bagian status audit lama di bawah merekam kondisi sebelum pemasangan credential.
 
-STATUS DAN BATAS VALIDASI
-- Workflow disimpan sebagai draft nonaktif, bukan dipublikasikan.
-- Belum menjalankan database, model AI, atau pengiriman WhatsApp.
-- Pengujian lokal: node --test integrations/n8n/workflow-casir.test.mjs
-- Tes lokal memeriksa kode, scope, parameter, struktur graph, dan pengaman.
-  Ini bukan bukti runtime end-to-end di n8n atau kesesuaian skema database server.
-- Manual Trigger di kanvas hanya menampilkan status draft; bukan tes integrasi.
-- Node PostgreSQL akan menunjukkan credential belum diisi. Ini disengaja.
+Workflow utama: https://n8n.ichsanlab.web.id/workflow/RogxKimgZh9ITEjW
+workflow-casir.json: body public API / ekspor tanpa password, API key, atau webhook secret.
+workflow-casir-recovery.json: housekeeping setiap menit, tanpa mengulang pesan.
+resilience/OPERATIONS.txt: hasil audit, batas, pemasangan database kontrol, pemulihan,
+pemantauan eksternal, backup, dan checklist sebelum publish. Baca file itu dahulu.
 
-ARSITEKTUR DATABASE
-Database internal n8n menyimpan workflow/credential/execution, BUKAN sumber laporan kasir.
-Workflow nantinya membaca database aplikasi kasir melalui credential PostgreSQL terpisah.
-Gunakan akun read-only khusus laporan, bukan akun aplikasi/Prisma, postgres superuser,
-atau credential database milik bot lain. Tidak ada migrasi/penyalinan data saat ini.
+STATUS
+Saat audit, versi sebelumnya sudah published oleh pengguna, namun flag live/DB/AI/
+pengiriman/ingress masih false. Credential PostgreSQL telah ditambahkan pengguna.
+Referensi credential laporan, AI, GoWA itu dipertahankan; tidak dibaca passwordnya.
+Hardening ini disimpan sebagai draft, tidak menjalankan query pada database produksi,
+tidak mengirim WhatsApp, tidak mengubah tabel POS, dan tidak mengaktifkan layanan.
+Role database yang benar, credential kontrol dan monitoring eksternal belum terpasang.
 
-TOOL YANG DISIAPKAN
-1. laporan_penjualan — omzet COMPLETED, transaksi, item, diskon/pajak per outlet.
-2. penjualan_harian_pembayaran — rincian harian WIB dan metode pembayaran.
-3. sesi_kasir — buka/tutup dan penjualan yang masuk periode laporan.
-4. produk_terlaris — jumlah dan subtotal item; bukan omzet net setelah diskon/pajak.
-5. stok_produk — persediaan, minimum stok, harga/modal terkini.
-6. bahan_baku — persediaan fisik disetujui Admin, satuan masing-masing.
-7. stock_opname — pagi/sore, status, stok hitungan/fisik, catatan/kolom tambahan.
-8. permintaan_bahan — tanggal kebutuhan, status, jumlah, catatan.
-9. mutasi_stok_produk — stok masuk/keluar manual produk.
-10. daftar_transaksi — invoice dan semua status; tanpa PII pelanggan.
-11. katalog_outlet_kategori_sku — katalog scoped outlet.
+ARSITEKTUR
+Database kasir = sumber laporan, SELECT saja memakai login read-only khusus.
+Database internal n8n = workflow/credential/execution; jangan modifikasi tabelnya.
+Database casir_automation = metadata dedup, pembatasan beban, breaker, status kirim;
+dibuat terpisah dari POS. control-schema.sql belum dijalankan pada server.
+Database terpisah pada instance yang sama bukan isolasi CPU/IO atau high availability.
 
-Tidak membaca accounts, sessions, verifications, settings, audit_logs, password/token.
-User hanya dibaca namanya untuk kasir sesi dengan join outlet yang sama.
-Tidak ada model inventaris resep/BOM atau snapshot modal historis di schema yang diperiksa;
-jangan mengklaim konsumsi bahan otomatis atau laba historis akurat.
+SUMBER LAPORAN (11 TOOL TETAP)
+laporan_penjualan; penjualan_harian_pembayaran; sesi_kasir; produk_terlaris;
+stok_produk; bahan_baku; stock_opname; permintaan_bahan; mutasi_stok_produk;
+daftar_transaksi; katalog_outlet_kategori_sku.
+Query parameterized dengan outlet yang ditetapkan konfigurasi operator, bukan AI.
+Tidak membaca account/session/verification/password/token; nama kasir saja dari users.
+Omzet hanya COMPLETED; pendapatan item sebelum diskon/pajak bukan omzet bersih.
+Tidak ada resep/BOM dan snapshot HPP historis; jangan mengarang pemakaian/laba.
+Bahan baku terpisah dari produk, stok hitungan opname terpisah dari hitung fisik.
+Tanggal inklusif WIB, maksimal 366 hari. Timestamp Prisma diasumsikan UTC;
+verifikasi schema/timestamp server. List terpotong diberi truncated/row_count.
 
-KONFIGURASI YANG DILENGKAPI NANTI
-1. Owner mapping di node Konfigurasi Casir:
-   { active: true, phone: nomor internasional tanpa +,
-     deviceId: JID device pada webhook GoWA,
-     gowaDeviceId: ID/session pengirim yang dikenali node GoWA,
-     ownerId: identitas pemilik yang telah diverifikasi,
-     outletIds: [ID outlet sah milik pemilik] }
-   Verifikasi mapping melalui jalur Admin/owner tepercaya, bukan klaim lewat chat.
-   Satu nomor/device hanya boleh satu mapping; daftar kosong menolak semua.
-   Mapping sementara pada konfigurasi, tidak berarti kolom WhatsApp sudah ada di users.
-   Kelak bisa diganti lookup otorisasi; jangan menghapus pembatasan query.
-2. Koneksi read-only ke database kasir, TLS sesuai jaringan; allowlist tabel,
-   statement_timeout (misalnya 10 detik) dan prinsip hak minimum pada role database.
-   Untuk isolasi tingkat database pertimbangkan reporting views/RLS sesuai role
-   sebelum produksi. Draft saat ini menegakkan outlet scope pada query, belum RLS.
-3. Pilih credential ini pada 11 node postgresTool dan bandingkan skema server
-   dengan prisma/schema.prisma lokal. Jangan mengubah database internal n8n.
-4. Set webhook GoWA dengan path /webhook/casir-owner-report setelah persiapan live.
-   Draft memakai payload modern { event, device_id, payload: { id, from,
-   chat_id, body, is_from_me, timestamp } }. Grup, self, receipt, media nonteks,
-   pesan >1500 karakter, event kedaluwarsa >5 menit, dan @lid ditolak.
-   Format legacy perlu adapter setelah melihat fixture nyata; jangan tebak identitas LID.
-5. HMAC SHA256 X-Hub-Signature-256 atas RAW bytes, secret acak >=32 karakter.
-   Gunakan secret GoWA tersendiri, bukan API key n8n dan bukan default 'secret'.
-   Code node mengacu CASIR_GOWA_WEBHOOK_SECRET serta require('crypto').
-   Periksa kebijakan task runner/env terlebih dulu: jika akses env/crypto tidak
-   diizinkan, verifikasi gagal tertutup. Pakai secret store/gateway tepercaya bila
-   tersedia; jangan melonggarkan kebijakan env global tanpa penilaian.
-6. Anti-replay timestamp ada, tetapi DEDUPLIKASI ATOMIK dan RATE LIMIT belum
-   dipasang. Wajib sediakan pada gateway/ingress sebelum ingressControlsReady=true.
-   Scope dedup per device+message ID; klaim atomik dan TTL, termasuk retry/concurrency.
-   Jangan menganggap staticData workflow sebagai lock andal untuk multi-worker.
-7. Credential GoWA dan model yang direferensikan berasal dari instance yang sama;
-   model bernama opencode mengikuti konfigurasi bot yang sudah ada.
-   Uji kompatibilitas tool calling dan device yang benar sebelum aiReady=true.
-   Penerima balasan diambil dari owner terverifikasi, tidak dari model AI.
-8. Aktifkan databaseReady/aiReady hanya sesudah tes, sendReplies setelah uji
-   dengan nomor owner/test yang disetujui. liveEnabled dan ingressControlsReady
-   tetap false sampai checklist lolos. Lalu publish secara sengaja.
+KONFIGURASI OPERATOR
+1. Konfigurasi Casir: owners, misalnya
+   {active:true,phone:"62...",deviceId:"...@s.whatsapp.net",
+    gowaDeviceId:"session-id",ownerId:"owner-terverifikasi",outletIds:["outlet-sah"]}
+   Nomor, device, outlet wajib diverifikasi di luar chat. Satu mapping saja per pasangan.
+2. Pasang role/credential read-only di 11 tool laporan + Cek Database dan Batas Query.
+   Timeout <=10s dan connection limit <=4 diperiksa sebelum AI.
+3. Pasang control-schema.sql di casir_automation melalui admin; credential kontrol
+   di node casir_control kedua workflow. Role timeout <=3s, lock <=1s, limit <=6.
+4. Webhook /webhook/casir-owner-report menggunakan payload modern GoWA:
+   {event,device_id,payload:{id,from,chat_id,body,is_from_me,timestamp}}.
+   Grup, self, receipt, media nonteks, pertanyaan >1500 karakter, dan event >5 menit
+   ditolak. HMAC SHA256 raw body, X-Hub-Signature-256, secret acak >=32 karakter.
+   CASIR_GOWA_WEBHOOK_SECRET dan require('crypto') harus tersedia sesuai kebijakan
+   runner/env. Jangan melonggarkan akses env global tanpa penilaian.
+5. Ingress harus membatasi spam SEBELUM execution n8n dibuat. Admission internal
+   saja tidak cukup melindungi server webhook. Rincian di OPERATIONS.txt.
+6. Model opencode/credential pengguna dipertahankan, tetapi kompatibilitas tool-calling
+   perlu diuji. Penerima balasan berasal dari owner terverifikasi, bukan output AI.
+7. Uji staging dahulu. Flag liveEnabled, ingressControlsReady, controlDatabaseReady,
+   databaseReady, aiReady, sendReplies masih false sampai semua prasyarat lolos.
+   Manual Trigger hanya memeriksa draft, bukan konektivitas/integrasi.
 
-KEAMANAN DAN OPERASIONAL
-- Workflow tidak mengubah POS, stok, approval opname, atau transaksi.
-- Query tetap/parameterized; AI tidak boleh memasok SQL atau scope sendiri.
-- Tanggal inklusif WIB, maksimal 366 hari. Timestamp Prisma diasumsikan UTC
-  dalam PostgreSQL timestamp without time zone sesuai migrasi lokal; verifikasi server.
-- List dibatasi dan envelope menyertakan truncated/row_count. Jangan gunakan
-  daftar terpotong sebagai total; gunakan laporan_penjualan untuk agregat omzet.
-- Tidak ada chat memory bersama; pertanyaan lanjutan wajib menyebut konteks lagi.
-- Kegagalan agent ditangani dengan pesan generik; balasan tanpa tool evidence
-  diarahkan meminta jenis laporan/outlet/tanggal, bukan angka rekaan.
-- Penyimpanan execution sukses/error/manual dimatikan untuk draft agar laporan
-  tidak tersimpan. Sebelum produksi rancang audit metadata minimal tanpa isi pesan,
-  retry/recovery, rate limit, dan pemantauan kegagalan pengiriman.
-- ACK webhook diberikan setelah verifikasi HMAC, sebelum proses AI. Jaminan
-  antrean/retry durable belum disediakan; uji penanganan gagal setelah ACK.
-- Tes live nanti harus mencakup: dua owner dua outlet, penolakan lintas outlet,
-  batas tanggal WIB, transaksi batal/refund, join item tanpa menggandakan omzet,
-  sesi terbuka lintas hari, opname dan satuan, query timeout, signature salah,
-  event duplikat/bersamaan, model gagal, dan GoWA gagal tanpa pesan ganda.
-
-REFERENSI TEKNIS
-https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.postgres/
-https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/tools-agent/
-https://github.com/aldinokemal/go-whatsapp-web-multidevice/blob/main/docs/webhook-payload.md
-https://github.com/aldinokemal/n8n-node-gowa/blob/main/nodes/GOWA/send.operations.ts
+UJI LOKAL
+node --test integrations/n8n/workflow-casir.test.mjs
+Di integrations/n8n/resilience: npm ci --ignore-scripts kemudian npm test.
+Ini tes kode/graph/SQL kontrol di PGlite + monitor mock, bukan end-to-end n8n/GoWA.
+Lihat OPERATIONS.txt untuk skenario failure injection sebelum publish.

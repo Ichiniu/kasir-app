@@ -1,0 +1,11 @@
+const message = $json;
+const config = $('Konfigurasi Casir').first().json.config;
+const owners = (config.owners || []).filter(o => o.active === true && o.deviceId === message.deviceId);
+const owner = owners[0];
+const valid = message.valid === true && owners.length === 1 && owner &&
+  /^[1-9][0-9]{7,14}$/.test(owner.phone) &&
+  typeof owner.ownerId === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(owner.ownerId) &&
+  typeof owner.gowaDeviceId === 'string' && owner.gowaDeviceId.length > 0 &&
+  Array.isArray(owner.outletIds) && owner.outletIds.length > 0 && owner.outletIds.length <= 20 &&
+  owner.outletIds.every(id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,100}$/.test(id));
+return [{json: valid ? {knownDevice:true, owner, message} : {knownDevice:false}}];

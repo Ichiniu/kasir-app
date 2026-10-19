@@ -1,0 +1,73 @@
+WHITELIST VIA WHATSAPP — 14 OKTOBER 2026
+
+Owner utama: 6289649261851, ownerId: owner-casir.
+Nomor tambahan hanya mendapat akses laporan outlet yang dipilih owner.
+Hak mengelola whitelist tidak dapat didelegasikan lewat chat.
+
+PERINTAH
+daftar outlet
+tambah whitelist 628123456789 untuk outlet Solo, Jogja
+tambah whitelist 628123456789 untuk outlet ID_OUTLET_A, ID_OUTLET_B
+lihat whitelist
+hapus whitelist 628123456789
+KONFIRMASI KODE_DARI_BOT
+BATAL KODE_DARI_BOT
+
+Nama outlet harus cocok persis (huruf besar/kecil diabaikan). Nama yang sama pada
+dua outlet wajib diganti dengan ID. Bot tidak menebak outlet dari nama parsial.
+Kode konfirmasi berlaku 5 menit, terikat owner dan device, satu kali pakai.
+Proposal baru membatalkan proposal sebelumnya. Tambah/hapus belum mengubah akses
+sampai owner membalas kode. Tambah nomor yang sudah ada MENGGANTI daftar outlet
+sebelumnya; bot menyebutkan hal itu sebelum meminta konfirmasi.
+Nomor yang belum terdaftar diabaikan. Perintah admin dari nomor tambahan ditolak.
+Pencabutan berlaku pada lookup permintaan berikutnya; proses yang sudah berjalan
+masih menggunakan akses yang disetujui saat permintaan itu masuk.
+Tidak ada pesan otomatis yang dikirim ke nomor baru, hanya balasan ke owner.
+
+DATABASE SERVER
+1. Di DBX buka SQL Editor pada database n8n_kasir sebagai admin.
+2. Jalankan SELURUH integrations/n8n/resilience/whitelist-schema.sql.
+   Script menambah whitelist_owners, whitelist_members, whitelist_pending,
+   whitelist_audit, whitelist_commands dan dua fungsi. Database POS tidak diubah.
+3. Jangan berikan GRANT ALL TABLES lagi ke casir_automation_worker. Tabel whitelist
+   sengaja tidak bisa diedit langsung oleh user itu. Dua fungsi terbatas diberi
+   EXECUTE melalui script dan menjalankan SQL tetap tanpa AI.
+4. Script membutuhkan role casir_automation_worker yang sebelumnya sudah dibuat.
+   Penetapan nomor owner berada di whitelist_owners dan konfigurasi workflow;
+   keduanya harus cocok. Perubahan owner hanya melalui admin/operator.
+
+KONFIGURASI WORKFLOW
+Credential dari workflow server dipertahankan, termasuk model AI yang dipilih user.
+Cari Akses Whitelist dan Jalankan Perintah Whitelist memakai credential kontrol.
+Daftar Outlet untuk Whitelist memakai credential laporan POS read-only.
+Isi deviceId dan gowaDeviceId sebenarnya di Konfigurasi Casir; tidak boleh nomor
+owner dijadikan device/session bot. Isi seluruh ID outlet milik owner ke outletIds
+(batas yang sudah ada: 20 ID). Outlet baru belum otomatis ditambahkan.
+Nama outlet untuk perintah dibaca dari POS menggunakan SELECT dengan scope itu.
+Set whitelistReady=true hanya setelah migrasi berhasil. Flag lain tetap mengikuti
+checklist OPERATIONS.txt; jangan menyalakan live hanya karena test connection sukses.
+Publish draft setelah migrasi, mapping device/outlet, signature webhook dan tes selesai.
+
+PENANGANAN GAGAL
+Perintah admin lewat jalur deterministik, tidak lewat model AI atau SQL buatan AI.
+Perintah admin tidak memerlukan aiReady=true, tetapi databaseReady dan preflight
+read-only tetap diperlukan agar nama/ID outlet dapat diperiksa saat konfirmasi.
+Semua permintaan tetap melewati batas beban, dedup, penyimpanan balasan dan claim
+kirim sekali. Rate limit memakai ownerId bersama untuk owner dan semua anggota.
+Artinya batas 3 pesan/menit dan 100/24jam berlaku gabungan untuk satu owner/device.
+Jika hasil kirim ambigu, jangan otomatis mengulang konfirmasi. Cek lihat whitelist
+atau audit setelah layanan pulih. Perubahan tercatat bersama ID pesan asal.
+Pending dan hasil perintah dibersihkan saat ada perintah admin berikutnya: pending
+>1 hari setelah kedaluwarsa, hasil >7 hari, audit >90 hari. Jika tidak ada perintah
+baru, record tetap tersimpan sampai maintenance manual; kedaluwarsa tetap ditegakkan.
+
+UJI LOKAL
+node --test integrations/n8n/workflow-casir.test.mjs
+Di integrations/n8n/resilience jalankan npm test.
+PGlite menguji transaksi, role, konfirmasi, dedup perintah, expiry, revoke dan scope.
+Ini bukan bukti end-to-end GoWA atau penerapan migrasi pada database server.
+
+SUMBER KODE
+*.code.txt adalah sumber Code node whitelist. workflow-casir.json menyimpan salinan
+kode untuk impor n8n; tes memeriksa sinkronisasi. Jika mengubah sumber, perbarui juga
+node yang bersangkutan sebelum mengimpor/mempublikasikan.

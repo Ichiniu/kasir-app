@@ -1,0 +1,4 @@
+/node_modules/
+/monitor-state.json
+/state/
+/.env
