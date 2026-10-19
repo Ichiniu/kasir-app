@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
-import { Check, ClipboardCheck, ClipboardList, Edit2, Filter, PackagePlus, Plus, RotateCcw, Save, ShieldCheck, ShoppingBasket, Trash2, X } from "lucide-react"
+import { Check, ClipboardCheck, ClipboardList, Edit2, Filter, History, PackagePlus, Plus, RotateCcw, Save, ShieldCheck, ShoppingBasket, Trash2, X } from "lucide-react"
 import {
   createRawMaterial,
   createStocktakeField,
@@ -23,7 +23,7 @@ type CountLine = { rawMaterialId: string; name: string; unit: string; openingSto
 type Stocktake = { id: string; date: string; shift: "MORNING" | "AFTERNOON"; status: string; notes: string | null; reviewNotes: string | null; createdByName: string; reviewedByName: string | null; submittedAt: string; reviewedAt: string | null; fields: unknown; lines: CountLine[] }
 type RequestLine = { rawMaterialId: string; name: string; unit: string; requestedAmount: string; notes: string | null }
 type MaterialRequest = { id: string; forDate: string; status: string; notes: string | null; reviewNotes: string | null; createdByName: string; reviewedByName: string | null; submittedAt: string | null; reviewedAt: string | null; lines: RequestLine[] }
-type View = "opname" | "permintaan" | "master"
+type View = "opname" | "permintaan" | "master" | "riwayat"
 type Shift = "MORNING" | "AFTERNOON"
 
 const statusLabel: Record<string, string> = { DRAFT: "Draft", SUBMITTED: "Menunggu Admin", APPROVED: "Disetujui", REJECTED: "Perlu diperbaiki" }
@@ -391,6 +391,7 @@ export function StockOpnameWorkspace({
         <NavButton active={view === "opname"} onClick={() => setView("opname")}><ClipboardCheck size={16} /> Opname Shift</NavButton>
         <NavButton active={view === "permintaan"} onClick={() => setView("permintaan")}><ShoppingBasket size={16} /> Permintaan Besok</NavButton>
         <NavButton active={view === "master"} onClick={() => setView("master")}><PackagePlus size={16} /> Item & Kolom</NavButton>
+        <NavButton active={view === "riwayat"} onClick={() => setView("riwayat")}><History size={16} /> Riwayat Stock Opname</NavButton>
       </nav>
 
       {view === "opname" && (
@@ -727,6 +728,32 @@ export function StockOpnameWorkspace({
           </div>)}</div>
         </div>
       </section>}
+
+      {view === "riwayat" && (
+        <section className="space-y-5">
+          <div className="rounded-2xl border border-[#e5e7eb] bg-white p-5">
+            <h2 className="font-semibold text-[#111827]">Riwayat Stock Opname</h2>
+            <p className="mt-1 text-xs text-[#6b7280]">
+              Daftar seluruh riwayat opname shift dan status persetujuannya. Klik rincian untuk melihat hitungan stok per bahan.
+            </p>
+          </div>
+          {stocktakes.length === 0 ? (
+            <Empty
+              title="Belum ada riwayat stock opname"
+              body="Laporan opname yang dikirim oleh shift kasir/dapur akan tercatat dan dapat ditinjau di sini."
+            />
+          ) : (
+            <HistoryPanel
+              stocktakes={stocktakes}
+              requests={requests}
+              canReview={canManage}
+              busy={busy}
+              onReviewTake={reviewTake}
+              onReviewRequest={reviewRequest}
+            />
+          )}
+        </section>
+      )}
 
       <aside className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-xs leading-5 text-blue-900"><p className="font-semibold">Catatan alur stok</p><p className="mt-1">Permintaan yang disetujui belum menambah stok. Stok baru berubah melalui persetujuan opname berdasarkan hitung fisik. Pencatatan penerimaan barang dari pembelian belum termasuk modul ini.</p></aside>
     </div>

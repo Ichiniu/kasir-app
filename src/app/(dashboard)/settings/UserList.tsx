@@ -116,20 +116,20 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
   const getRoleBadge = (role: string) => {
     if (role === "SUPERADMIN") {
       return (
-        <Badge variant="outline" className="text-[10px] font-bold text-purple-700 bg-purple-50 border-purple-200 px-1.5 py-0 uppercase">
+        <Badge variant="outline" className="text-[10px] font-bold text-[#111827] bg-purple-50 border-purple-200 px-1.5 py-0 uppercase">
           Super Admin
         </Badge>
       )
     }
     if (role === "ADMIN") {
       return (
-        <Badge variant="outline" className="text-[10px] font-bold text-gray-700 bg-gray-50 border-gray-200 px-1.5 py-0 uppercase">
+        <Badge variant="outline" className="text-[10px] font-bold text-[#111827] bg-gray-50 border-gray-200 px-1.5 py-0 uppercase">
           Administrator
         </Badge>
       )
     }
     return (
-      <Badge variant="outline" className="text-[10px] font-bold text-gray-400 bg-white border-gray-100 px-1.5 py-0 uppercase">
+      <Badge variant="outline" className="text-[10px] font-bold text-[#111827] bg-white border-gray-200 px-1.5 py-0 uppercase">
         Kasir Staff
       </Badge>
     )
@@ -210,12 +210,12 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       {user.role === "SUPERADMIN" ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-                          <Store size={12} /> Semua Outlet
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#111827] bg-[#f3f4f6] px-2.5 py-0.5 rounded-full border border-[#e5e7eb]">
+                          <Store size={12} className="text-[#111827]" /> Semua Outlet
                         </span>
                       ) : user.outlet?.nama ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-950 bg-[#FFB800]/20 px-2 py-0.5 rounded-full border border-[#FFB800]/30">
-                          <Store size={12} /> {user.outlet.nama}
+                        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#111827] bg-[#f3f4f6] px-2.5 py-0.5 rounded-full border border-[#e5e7eb]">
+                          <Store size={12} className="text-[#111827]" /> {user.outlet.nama}
                         </span>
                       ) : (
                         <span className="text-xs text-gray-400 italic">Belum ditentukan</span>

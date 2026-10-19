@@ -12,15 +12,29 @@ export default async function WeeklyReportPage({
   const startDateParam = typeof sp?.startDate === "string" ? sp.startDate : undefined
   const endDateParam = typeof sp?.endDate === "string" ? sp.endDate : undefined
   
-  const date = dateParam ? new Date(dateParam) : new Date()
+  const date = dateParam ? new Date(`${dateParam}T00:00:00`) : new Date()
   
-  // If custom range is provided, use it
-  const range = (startDateParam && endDateParam) ? {
-    start: new Date(startDateParam),
-    end: new Date(endDateParam)
-  } : undefined
+  let range: { start: Date; end: Date } | undefined = undefined
+  if (startDateParam && endDateParam) {
+    let s = new Date(`${startDateParam}T00:00:00`)
+    let e = new Date(`${endDateParam}T23:59:59.999`)
+    if (s > e) {
+      const temp = s
+      s = new Date(`${endDateParam}T00:00:00`)
+      e = new Date(`${startDateParam}T23:59:59.999`)
+    }
+    range = { start: s, end: e }
+  } else if (startDateParam) {
+    const s = new Date(`${startDateParam}T00:00:00`)
+    const e = new Date(s)
+    e.setDate(e.getDate() + 6)
+    e.setHours(23, 59, 59, 999)
+    range = { start: s, end: e }
+  }
 
-  const data = await getReportData("weekly", date, range)
+  const outletParam = typeof sp?.outletId === "string" ? sp.outletId : undefined
+  
+  const data = await getReportData("weekly", date, range, outletParam)
 
   return (
     <React.Suspense fallback={<div className="p-10 text-center text-sm text-gray-500">Memuat laporan mingguan...</div>}>

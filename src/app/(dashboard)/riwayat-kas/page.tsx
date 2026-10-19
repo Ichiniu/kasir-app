@@ -144,7 +144,7 @@ export default async function RiwayatKasPage({
                           {reg.status === "CLOSED" && (
                             <span className={cn(
                               "text-[9px] font-bold px-1 rounded uppercase tracking-tighter mt-1",
-                              diff === 0 ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+                              diff === 0 ? "bg-emerald-50 text-[#111827]" : "bg-red-50 text-red-600"
                             )}>
                               {diff === 0 ? "PAS" : `SELISIH: ${formatCurrency(diff)}`}
                             </span>

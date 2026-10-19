@@ -9,9 +9,10 @@ export default async function DailyReportPage({
 }) {
   const sp = await searchParams
   const dateParam = typeof sp?.date === "string" ? sp.date : undefined
-  const date = dateParam ? new Date(dateParam) : new Date()
+  const outletParam = typeof sp?.outletId === "string" ? sp.outletId : undefined
+  const date = dateParam ? new Date(`${dateParam}T00:00:00`) : new Date()
 
-  const data = await getReportData("daily", date)
+  const data = await getReportData("daily", date, undefined, outletParam)
 
   return (
     <React.Suspense fallback={<div className="p-10 text-center text-sm text-gray-500">Memuat laporan...</div>}>

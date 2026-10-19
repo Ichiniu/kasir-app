@@ -9,18 +9,31 @@ import {
   CreditCard, 
   ArrowUpRight, 
   Calendar as CalendarIcon,
+  ChevronLeft,
   ChevronRight,
   Download,
-  CheckCircle2
+  CheckCircle2,
+  Store
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { format, parseISO } from "date-fns"
+import { 
+  format, 
+  parseISO, 
+  addDays, 
+  subDays, 
+  addWeeks, 
+  subWeeks, 
+  addMonths, 
+  subMonths, 
+  isValid, 
+  startOfWeek, 
+  endOfWeek 
+} from "date-fns"
 import { id } from "date-fns/locale"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { DatePicker } from "@/components/ui/date-picker"
 
 import { 
   AreaChart, 
@@ -43,39 +56,172 @@ export function ReportView({ title, data, type }: ReportViewProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (!date) return
-    const params = new URLSearchParams(searchParams.toString())
-    const dateStr = format(date, type === "monthly" ? "yyyy-MM" : "yyyy-MM-dd")
-    params.set("date", dateStr)
-    params.delete("startDate")
-    params.delete("endDate")
-    router.push(`${pathname}?${params.toString()}`)
+  // --- DAILY REPORT CONTROLS ---
+  const activeDailyDateStr = React.useMemo(() => {
+    return data?.period?.startDate || searchParams.get("date") || format(new Date(), "yyyy-MM-dd")
+  }, [data?.period?.startDate, searchParams])
+
+  const activeDailyDateObj = React.useMemo(() => {
+    try {
+      const d = parseISO(activeDailyDateStr)
+      return isValid(d) ? d : new Date()
+    } catch {
+      return new Date()
+    }
+  }, [activeDailyDateStr])
+
+  const isDailyToday = React.useMemo(() => {
+    return activeDailyDateStr === format(new Date(), "yyyy-MM-dd")
+  }, [activeDailyDateStr])
+
+  const handlePrevDay = () => {
+    const prev = subDays(activeDailyDateObj, 1)
+    router.push(`${pathname}?date=${format(prev, "yyyy-MM-dd")}`)
   }
 
-  const handleRangeChange = (key: "startDate" | "endDate", date: Date | undefined) => {
-    if (!date) return
-    const params = new URLSearchParams(searchParams.toString())
-    params.set(key, format(date, "yyyy-MM-dd"))
-    params.delete("date")
-    router.push(`${pathname}?${params.toString()}`)
+  const handleToday = () => {
+    router.push(pathname)
   }
 
-  // Determine initial values based on data.period.start/end
-  const currentDate = React.useMemo(() => {
-    if (!data?.period?.start) return new Date()
-    return new Date(data.period.start)
-  }, [data?.period?.start])
+  const handleNextDay = () => {
+    const next = addDays(activeDailyDateObj, 1)
+    router.push(`${pathname}?date=${format(next, "yyyy-MM-dd")}`)
+  }
 
-  const startDate = React.useMemo(() => {
-    const dateStr = searchParams.get("startDate") || (data?.period?.start ? format(new Date(data.period.start), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"))
-    return parseISO(dateStr)
-  }, [searchParams, data?.period?.start])
+  const handleDailySelect = (val: string) => {
+    if (!val) return
+    router.push(`${pathname}?date=${val}`)
+  }
 
-  const endDate = React.useMemo(() => {
-    const dateStr = searchParams.get("endDate") || (data?.period?.end ? format(new Date(data.period.end), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"))
-    return parseISO(dateStr)
-  }, [searchParams, data?.period?.end])
+  // --- WEEKLY REPORT CONTROLS ---
+  const currentStartStr = React.useMemo(() => {
+    return data?.period?.startDate || searchParams.get("startDate") || format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd")
+  }, [data?.period?.startDate, searchParams])
+
+  const currentEndStr = React.useMemo(() => {
+    return data?.period?.endDate || searchParams.get("endDate") || format(endOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd")
+  }, [data?.period?.endDate, searchParams])
+
+  const [rangeStartInput, setRangeStartInput] = React.useState(currentStartStr)
+  const [rangeEndInput, setRangeEndInput] = React.useState(currentEndStr)
+
+  React.useEffect(() => {
+    if (data?.period?.startDate) setRangeStartInput(data.period.startDate)
+    if (data?.period?.endDate) setRangeEndInput(data.period.endDate)
+  }, [data?.period?.startDate, data?.period?.endDate])
+
+  const isWeeklyCurrentWeek = React.useMemo(() => {
+    const now = new Date()
+    const thisWeekStart = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd")
+    const thisWeekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd")
+    return currentStartStr === thisWeekStart && currentEndStr === thisWeekEnd
+  }, [currentStartStr, currentEndStr])
+
+  const handlePrevWeek = () => {
+    try {
+      const s = parseISO(currentStartStr)
+      const newStart = subWeeks(s, 1)
+      const newEnd = addDays(newStart, 6)
+      router.push(`${pathname}?startDate=${format(newStart, "yyyy-MM-dd")}&endDate=${format(newEnd, "yyyy-MM-dd")}`)
+    } catch {
+      router.push(pathname)
+    }
+  }
+
+  const handleThisWeek = () => {
+    router.push(pathname)
+  }
+
+  const handleNextWeek = () => {
+    try {
+      const s = parseISO(currentStartStr)
+      const newStart = addWeeks(s, 1)
+      const newEnd = addDays(newStart, 6)
+      router.push(`${pathname}?startDate=${format(newStart, "yyyy-MM-dd")}&endDate=${format(newEnd, "yyyy-MM-dd")}`)
+    } catch {
+      router.push(pathname)
+    }
+  }
+
+  const handleApplyWeeklyRange = (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!rangeStartInput || !rangeEndInput) return
+    router.push(`${pathname}?startDate=${rangeStartInput}&endDate=${rangeEndInput}`)
+  }
+
+  // --- MONTHLY REPORT CONTROLS ---
+  const currentMonthStr = React.useMemo(() => {
+    return data?.period?.monthStr || searchParams.get("date") || format(new Date(), "yyyy-MM")
+  }, [data?.period?.monthStr, searchParams])
+
+  const currentMonthDate = React.useMemo(() => {
+    try {
+      const d = parseISO(`${currentMonthStr}-01`)
+      return isValid(d) ? d : new Date()
+    } catch {
+      return new Date()
+    }
+  }, [currentMonthStr])
+
+  const isMonthlyCurrentMonth = React.useMemo(() => {
+    return currentMonthStr === format(new Date(), "yyyy-MM")
+  }, [currentMonthStr])
+
+  const handlePrevMonth = () => {
+    const prev = subMonths(currentMonthDate, 1)
+    router.push(`${pathname}?date=${format(prev, "yyyy-MM")}`)
+  }
+
+  const handleThisMonth = () => {
+    router.push(pathname)
+  }
+
+  const handleNextMonth = () => {
+    const next = addMonths(currentMonthDate, 1)
+    router.push(`${pathname}?date=${format(next, "yyyy-MM")}`)
+  }
+
+  const currentYear = currentMonthDate.getFullYear()
+  const currentMonthIdx = currentMonthDate.getMonth()
+
+  const monthsList = [
+    { label: "Januari", value: "01" },
+    { label: "Februari", value: "02" },
+    { label: "Maret", value: "03" },
+    { label: "April", value: "04" },
+    { label: "Mei", value: "05" },
+    { label: "Juni", value: "06" },
+    { label: "Juli", value: "07" },
+    { label: "Agustus", value: "08" },
+    { label: "September", value: "09" },
+    { label: "Oktober", value: "10" },
+    { label: "November", value: "11" },
+    { label: "Desember", value: "12" },
+  ]
+
+  const yearsList = React.useMemo(() => {
+    const thisYear = new Date().getFullYear()
+    return [thisYear - 3, thisYear - 2, thisYear - 1, thisYear, thisYear + 1]
+  }, [])
+
+  const handleSelectMonth = (monthVal: string) => {
+    router.push(`${pathname}?date=${currentYear}-${monthVal}`)
+  }
+
+  const handleSelectYear = (yearVal: string) => {
+    const mStr = String(currentMonthIdx + 1).padStart(2, "0")
+    router.push(`${pathname}?date=${yearVal}-${mStr}`)
+  }
+
+  const handleOutletFilter = (outletId: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (outletId) {
+      params.set("outletId", outletId)
+    } else {
+      params.delete("outletId")
+    }
+    router.push(`${pathname}?${params.toString()}`)
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -93,21 +239,22 @@ export function ReportView({ title, data, type }: ReportViewProps) {
     doc.setFont('helvetica', 'bold')
     doc.text(title, 14, 20)
     
-    // Period
+    // Period & Outlet
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
-    doc.text(`Periode: ${data?.period?.label}`, 14, 28)
+    doc.text(`Periode : ${data?.period?.label}`, 14, 28)
+    doc.text(`Cabang  : ${data?.currentOutletName || 'Semua Cabang'}`, 14, 34)
     
     // Summary
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
-    doc.text('Ringkasan', 14, 40)
+    doc.text('Ringkasan', 14, 44)
     
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
-    doc.text(`Total Pendapatan: ${formatCurrency(data?.summary?.totalRevenue || 0)}`, 14, 48)
-    doc.text(`Total Transaksi: ${data?.summary?.totalTransactions || 0}`, 14, 55)
-    doc.text(`Produk Terjual: ${data?.summary?.totalItemsSold || 0} pcs`, 14, 62)
+    doc.text(`Total Pendapatan: ${formatCurrency(data?.summary?.totalRevenue || 0)}`, 14, 52)
+    doc.text(`Total Transaksi: ${data?.summary?.totalTransactions || 0}`, 14, 59)
+    doc.text(`Produk Terjual: ${data?.summary?.totalItemsSold || 0} pcs`, 14, 66)
     
     // Transactions Table
     if (transactions.length > 0) {
@@ -140,45 +287,213 @@ export function ReportView({ title, data, type }: ReportViewProps) {
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
   const currentTransactions = transactions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [data?.period?.start, data?.period?.end, data?.currentOutletId]);
+
   return (
     <div className="p-6 space-y-8 bg-white min-h-screen font-sans">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">{title}</h1>
-          <p className="text-sm text-[#6b7280] mt-1">
-            Periode: <span className="font-medium text-[#111827]">{data?.period?.label}</span>
-          </p>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-[#6b7280] mt-1">
+            <span>Periode: <strong className="font-semibold text-[#111827]">{data?.period?.label}</strong></span>
+            <span className="text-[#d1d5db]">•</span>
+            <span>Cabang: <strong className="font-semibold text-[#111827]">{data?.currentOutletName || "Cabang Utama"}</strong></span>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {type === "weekly" ? (
-            <div className="flex items-center gap-2">
-              <DatePicker
-                date={startDate}
-                onDateChange={(date) => handleRangeChange("startDate", date)}
-                placeholder="Dari tanggal"
-                className="h-10 border-[#e5e7eb]"
-              />
-              <span className="text-[#6b7280]">-</span>
-              <DatePicker
-                date={endDate}
-                onDateChange={(date) => handleRangeChange("endDate", date)}
-                placeholder="Sampai tanggal"
-                className="h-10 border-[#e5e7eb]"
-              />
+          {data?.isSuperAdmin && data?.outlets && data.outlets.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-[#f9fafb] px-2.5 py-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
+              <Store size={14} className="text-[#6b7280]" />
+              <select
+                value={searchParams.get("outletId") || ""}
+                onChange={(e) => handleOutletFilter(e.target.value)}
+                className="h-8 border-none bg-transparent text-xs font-semibold text-[#111827] focus:outline-none cursor-pointer"
+              >
+                <option value="">Semua Cabang (Konsolidasi)</option>
+                {data.outlets.map((outlet: any) => (
+                  <option key={outlet.id} value={outlet.id}>
+                    {outlet.nama}
+                  </option>
+                ))}
+              </select>
             </div>
-          ) : (
-            <DatePicker
-              date={currentDate}
-              onDateChange={handleDateChange}
-              placeholder={type === "monthly" ? "Pilih bulan" : "Pilih tanggal"}
-              className="h-10 w-[200px] border-[#e5e7eb]"
-            />
           )}
-          
+
+          {type === "daily" && (
+            <div className="flex items-center gap-2 bg-[#f9fafb] p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={handlePrevDay}
+                  title="Hari Sebelumnya"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToday}
+                  className={`h-8 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    isDailyToday
+                      ? "bg-[#FFB800] text-black shadow-2xs"
+                      : "hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb]"
+                  }`}
+                >
+                  Hari Ini
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextDay}
+                  title="Hari Berikutnya"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div className="h-5 w-px bg-[#e5e7eb]" />
+
+              <div className="relative flex items-center">
+                <CalendarIcon size={14} className="absolute left-2.5 text-[#6b7280] pointer-events-none" />
+                <input
+                  type="date"
+                  value={activeDailyDateStr}
+                  onChange={(e) => handleDailySelect(e.target.value)}
+                  className="h-8 pl-8 pr-2.5 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] cursor-pointer hover:border-[#d1d5db]"
+                />
+              </div>
+            </div>
+          )}
+
+          {type === "weekly" && (
+            <div className="flex flex-wrap items-center gap-2 bg-[#f9fafb] p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={handlePrevWeek}
+                  title="Minggu Lalu"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleThisWeek}
+                  className={`h-8 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    isWeeklyCurrentWeek
+                      ? "bg-[#FFB800] text-black shadow-2xs"
+                      : "hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb]"
+                  }`}
+                >
+                  Minggu Ini
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextWeek}
+                  title="Minggu Depan"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div className="h-5 w-px bg-[#e5e7eb] hidden sm:block" />
+
+              <form onSubmit={handleApplyWeeklyRange} className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium text-[#6b7280]">Dari:</span>
+                <input
+                  type="date"
+                  value={rangeStartInput}
+                  onChange={(e) => setRangeStartInput(e.target.value)}
+                  className="h-8 px-2 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] hover:border-[#d1d5db]"
+                />
+                <span className="text-[#9ca3af]">-</span>
+                <span className="text-[11px] font-medium text-[#6b7280]">Sampai:</span>
+                <input
+                  type="date"
+                  value={rangeEndInput}
+                  onChange={(e) => setRangeEndInput(e.target.value)}
+                  className="h-8 px-2 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] hover:border-[#d1d5db]"
+                />
+                <button
+                  type="submit"
+                  disabled={!rangeStartInput || !rangeEndInput}
+                  className="h-8 px-3 rounded-lg bg-[#111827] hover:bg-black text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Terapkan
+                </button>
+              </form>
+            </div>
+          )}
+
+          {type === "monthly" && (
+            <div className="flex flex-wrap items-center gap-2 bg-[#f9fafb] p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={handlePrevMonth}
+                  title="Bulan Lalu"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleThisMonth}
+                  className={`h-8 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                    isMonthlyCurrentMonth
+                      ? "bg-[#FFB800] text-black shadow-2xs"
+                      : "hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb]"
+                  }`}
+                >
+                  Bulan Ini
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextMonth}
+                  title="Bulan Berikutnya"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div className="h-5 w-px bg-[#e5e7eb]" />
+
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={String(currentMonthIdx + 1).padStart(2, "0")}
+                  onChange={(e) => handleSelectMonth(e.target.value)}
+                  className="h-8 px-2 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] cursor-pointer hover:border-[#d1d5db]"
+                >
+                  {monthsList.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={currentYear}
+                  onChange={(e) => handleSelectYear(e.target.value)}
+                  className="h-8 px-2 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] cursor-pointer hover:border-[#d1d5db]"
+                >
+                  {yearsList.map((yr) => (
+                    <option key={yr} value={yr}>
+                      {yr}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleExportPDF}
-            className="h-10 px-4 rounded-lg border border-[#e5e7eb] bg-white hover:bg-[#f3f4f6] text-[#374151] text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
+            className="h-10 px-4 rounded-lg border border-[#e5e7eb] bg-white hover:bg-[#f3f4f6] text-[#374151] text-sm font-medium transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
           >
             <Download size={16} />
             Unduh PDF
@@ -369,7 +684,14 @@ export function ReportView({ title, data, type }: ReportViewProps) {
                   <tr key={t.id} className="hover:bg-[#f9fafb] transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-semibold text-[#111827] text-sm">{t.invoiceNumber}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-[#111827] text-sm">{t.invoiceNumber}</span>
+                          {data?.isSuperAdmin && t.outletName && t.outletName !== "-" && (
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-gray-100 text-gray-700 font-medium">
+                              {t.outletName}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[10px] text-[#6b7280]">{format(new Date(t.createdAt), "dd MMM, HH:mm", { locale: id })}</span>
                       </div>
                     </td>

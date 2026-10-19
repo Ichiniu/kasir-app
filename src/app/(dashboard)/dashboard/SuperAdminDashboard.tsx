@@ -161,7 +161,7 @@ export function SuperAdminDashboard({ initialData }: SuperAdminDashboardProps) {
               <TrendingUp size={18} />
             </div>
           </div>
-          <div className="text-2xl md:text-3xl font-extrabold text-[#111827] tracking-tight">
+          <div className="text-xl md:text-2xl font-bold text-[#111827] tracking-tight">
             {formatCurrency(data.overall.totalRevenue)}
           </div>
           <div className="flex items-center gap-1.5 mt-2 text-xs text-[#6b7280]">
@@ -178,7 +178,7 @@ export function SuperAdminDashboard({ initialData }: SuperAdminDashboardProps) {
               <Receipt size={18} />
             </div>
           </div>
-          <div className="text-2xl md:text-3xl font-extrabold text-[#111827] tracking-tight">
+          <div className="text-xl md:text-2xl font-bold text-[#111827] tracking-tight">
             {data.overall.totalTransactions.toLocaleString("id-ID")}
             <span className="text-sm font-medium text-[#6b7280] ml-1.5">Trx</span>
           </div>
@@ -196,7 +196,7 @@ export function SuperAdminDashboard({ initialData }: SuperAdminDashboardProps) {
               <Store size={18} />
             </div>
           </div>
-          <div className="text-2xl md:text-3xl font-extrabold text-[#111827] tracking-tight">
+          <div className="text-xl md:text-2xl font-bold text-[#111827] tracking-tight">
             {formatCurrency(data.overall.averageRevenuePerOutlet)}
           </div>
           <div className="flex items-center gap-1.5 mt-2 text-xs text-[#6b7280]">
@@ -212,7 +212,7 @@ export function SuperAdminDashboard({ initialData }: SuperAdminDashboardProps) {
               <ArrowUpRight size={18} />
             </div>
           </div>
-          <div className="text-lg font-bold text-[#111827] truncate">
+          <div className="text-base font-semibold text-[#111827] truncate">
             {data.overall.topPerformingOutlet ? data.overall.topPerformingOutlet.nama : "Belum Ada"}
           </div>
           <div className="mt-1 text-sm font-semibold text-emerald-600">
@@ -238,7 +238,7 @@ export function SuperAdminDashboard({ initialData }: SuperAdminDashboardProps) {
             </span>
           </div>
 
-          <div className="h-4 w-full bg-[#f3f4f6] rounded-full overflow-hidden flex shadow-inner">
+          <div className="h-2 w-full bg-[#f3f4f6] rounded-full overflow-hidden flex shadow-inner">
             {data.outlets
               .filter(o => o.totalRevenue > 0)
               .map((o, idx) => {
