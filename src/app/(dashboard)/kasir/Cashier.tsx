@@ -161,8 +161,8 @@ export function Cashier({
   }
 
   return (
-    <div className="flex flex-col xl:flex-row h-full gap-6 p-6 bg-white overflow-hidden font-sans">
-      <div className="flex-1 flex flex-col gap-6 overflow-hidden min-w-0">
+    <div className="flex flex-col md:flex-row h-full gap-4 lg:gap-6 p-4 lg:p-6 bg-white overflow-hidden font-sans">
+      <div className="flex-1 flex flex-col gap-4 lg:gap-6 overflow-hidden min-w-0">
         <div className="flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">Kasir</h1>
@@ -208,7 +208,7 @@ export function Cashier({
         <div className={cn(
           "flex-1 overflow-y-auto pr-2 pb-4 custom-scrollbar",
           viewMode === "grid" 
-            ? "grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3.5 content-start" 
+            ? "grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3.5 content-start" 
             : "flex flex-col gap-3"
         )}>
           {filteredProducts.map((p) => (
@@ -297,7 +297,7 @@ export function Cashier({
         </div>
       </div>
 
-      <div className="w-full xl:w-[400px] xl:flex-shrink-0 flex flex-col xl:h-screen xl:max-h-screen overflow-hidden">
+      <div className="w-full md:w-[320px] lg:w-[360px] xl:w-[400px] md:shrink-0 flex flex-col h-full max-h-full overflow-hidden">
         <div className="flex flex-col border border-[#e5e7eb] overflow-hidden rounded-2xl bg-white shadow-sm h-full max-h-full">
           <div className="p-4 border-b border-[#e5e7eb] flex items-center justify-between bg-[#f9fafb]">
             <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, Suspense } from 'react'
+import Image from 'next/image'
 import { signIn } from "@/lib/auth-client"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -57,18 +58,16 @@ function LoginForm() {
   return (
     <div className="min-h-screen flex w-full font-sans bg-white">
       <div className="w-full md:w-[480px] lg:w-[550px] bg-white p-8 md:p-16 flex flex-col justify-center shrink-0 z-10 relative">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="bg-[#a3b38c] p-2 rounded-lg">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Casir+</h1>
-            <p className="text-xs font-medium text-gray-500">By Ichsan Wahyu Utomo</p>
-          </div>
+        <div className="mb-8 space-y-2">
+          <Image
+            src="/logo.png"
+            alt="Casir+"
+            width={180}
+            height={97}
+            className="h-14 w-auto object-contain"
+            priority
+          />
+          <p className="text-xs font-medium text-gray-500">By Ichsan Wahyu Utomo</p>
         </div>
         
         <p className="text-sm text-gray-600 mb-8 leading-relaxed pr-10">

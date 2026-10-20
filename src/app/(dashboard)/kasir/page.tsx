@@ -52,7 +52,7 @@ export default async function KasirPage() {
   }))
 
   return (
-    <div className="bg-[#f8fafc] min-h-screen">
+    <div className="bg-white h-[calc(100dvh-4rem)] overflow-hidden">
       <Cashier 
         initialProducts={serializableProducts} 
         userId={userId} 
