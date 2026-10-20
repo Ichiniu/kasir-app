@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Noto_Serif } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "react-day-picker/style.css";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
-const notoSerif = Noto_Serif({
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-noto-serif",
+  variable: "--font-plus-jakarta-sans",
   display: "swap",
 });
 
@@ -22,8 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={notoSerif.variable} suppressHydrationWarning>
-      <body className={`${notoSerif.className} antialiased`} suppressHydrationWarning>
+    <html lang="id" className={plusJakartaSans.variable} suppressHydrationWarning>
+      <body className={`${plusJakartaSans.className} antialiased`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

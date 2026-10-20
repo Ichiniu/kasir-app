@@ -25,8 +25,6 @@ import {
   subDays, 
   addWeeks, 
   subWeeks, 
-  addMonths, 
-  subMonths, 
   isValid, 
   startOfWeek, 
   endOfWeek 
@@ -160,24 +158,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
       return new Date()
     }
   }, [currentMonthStr])
-
-  const isMonthlyCurrentMonth = React.useMemo(() => {
-    return currentMonthStr === format(new Date(), "yyyy-MM")
-  }, [currentMonthStr])
-
-  const handlePrevMonth = () => {
-    const prev = subMonths(currentMonthDate, 1)
-    router.push(`${pathname}?date=${format(prev, "yyyy-MM")}`)
-  }
-
-  const handleThisMonth = () => {
-    router.push(pathname)
-  }
-
-  const handleNextMonth = () => {
-    const next = addMonths(currentMonthDate, 1)
-    router.push(`${pathname}?date=${format(next, "yyyy-MM")}`)
-  }
 
   const currentYear = currentMonthDate.getFullYear()
   const currentMonthIdx = currentMonthDate.getMonth()
@@ -340,64 +320,30 @@ export function ReportView({ title, data, type }: ReportViewProps) {
           )}
 
           {type === "monthly" && (
-            <div className="flex flex-wrap items-center gap-2 bg-[#f9fafb] p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={handlePrevMonth}
-                  title="Bulan Lalu"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleThisMonth}
-                  className={`h-8 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    isMonthlyCurrentMonth
-                      ? "bg-[#FFB800] text-black shadow-2xs"
-                      : "hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb]"
-                  }`}
-                >
-                  Bulan Ini
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextMonth}
-                  title="Bulan Berikutnya"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+            <div className="flex items-center gap-1.5 bg-[#f9fafb] p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
+              <select
+                value={String(currentMonthIdx + 1).padStart(2, "0")}
+                onChange={(e) => handleSelectMonth(e.target.value)}
+                className="h-8 px-2.5 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] cursor-pointer hover:border-[#d1d5db]"
+              >
+                {monthsList.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
 
-              <div className="h-5 w-px bg-[#e5e7eb]" />
-
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={String(currentMonthIdx + 1).padStart(2, "0")}
-                  onChange={(e) => handleSelectMonth(e.target.value)}
-                  className="h-8 px-2 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] cursor-pointer hover:border-[#d1d5db]"
-                >
-                  {monthsList.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={currentYear}
-                  onChange={(e) => handleSelectYear(e.target.value)}
-                  className="h-8 px-2 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] cursor-pointer hover:border-[#d1d5db]"
-                >
-                  {yearsList.map((yr) => (
-                    <option key={yr} value={yr}>
-                      {yr}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={currentYear}
+                onChange={(e) => handleSelectYear(e.target.value)}
+                className="h-8 px-2.5 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] cursor-pointer hover:border-[#d1d5db]"
+              >
+                {yearsList.map((yr) => (
+                  <option key={yr} value={yr}>
+                    {yr}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
