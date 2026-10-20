@@ -165,7 +165,7 @@ export function UserFormModal({
           {/* Password Field */}
           <div className="space-y-1">
             <Label htmlFor="password" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
-              Kata Sandi Akses {user && <span className="text-[9px] text-emerald-500 lowercase">(Kosongkan jika tidak diubah)</span>}
+              Kata Sandi Akses {user && <span className="text-[9px] text-emerald-500 lowercase"></span>}
             </Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
@@ -188,7 +188,7 @@ export function UserFormModal({
             </div>
             {user && (
               <p className="text-[10px] text-[#6b7280] leading-tight">
-                🔒 Kata sandi lama tersimpan dalam enkripsi satu arah (hash) dan tidak dapat dilihat kembali. Masukkan teks baru jika ingin mereset sandi user ini.
+                Untuk mengubah kata sandi, hapus isi kolom ini, ketik kata sandi baru, lalu klik Simpan. Biarkan jika tidak ingin mengubah.
               </p>
             )}
           </div>

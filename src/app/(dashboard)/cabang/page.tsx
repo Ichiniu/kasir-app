@@ -28,12 +28,12 @@ export default async function CabangPage() {
       <div className="flex justify-between items-end">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Store size={20} className="text-[#FFB800]" />
-            <span className="text-xs font-black text-[#FFB800] uppercase tracking-widest">
+            <Store size={20} className="text-[#64748b]" />
+            <span className="text-xs font-black text-[#64748b] uppercase tracking-widest">
               Multi-Branch Management
             </span>
           </div>
-          <h1 className="text-3xl font-bold text-[#0f172a] tracking-tight">
+          <h1 className="mt-1 text-2xl font-semibold text-[#111827]">
             Kelola Cabang
           </h1>
           <p className="text-[#64748b] mt-1">

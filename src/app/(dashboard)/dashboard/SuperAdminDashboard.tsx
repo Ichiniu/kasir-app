@@ -84,10 +84,7 @@ export function SuperAdminDashboard({ initialData }: SuperAdminDashboardProps) {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#e5e7eb] pb-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#111827] text-white tracking-wide">
-              <Sparkles size={12} className="text-amber-400" />
-              OWNER / SUPERADMIN CONSOLE
-            </span>
+            <span className="text-xs font-black text-[##64748b] uppercase tracking-widest">OWNER CONSOLE</span>
             <span className="text-xs text-[#6b7280] font-medium">• Multi-Outlet Performance</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-[#111827] tracking-tight">

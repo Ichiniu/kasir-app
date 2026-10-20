@@ -70,7 +70,6 @@ const sidebarItems = [
     section: "LAPORAN",
     roles: ["ADMIN"],
     items: [
-      { title: "Laporan Harian", href: "/laporan/harian", icon: BarChart3 },
       { title: "Laporan Mingguan", href: "/laporan/mingguan", icon: BarChart3 },
       { title: "Laporan Bulanan", href: "/laporan/bulanan", icon: BarChart3 },
     ],

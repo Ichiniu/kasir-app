@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { DatePickerWithRange, DatePickerInput } from "@/components/ui/date-picker"
 import { 
   format, 
   parseISO, 
@@ -356,15 +357,14 @@ export function ReportView({ title, data, type }: ReportViewProps) {
 
               <div className="h-5 w-px bg-[#e5e7eb]" />
 
-              <div className="relative flex items-center">
-                <CalendarIcon size={14} className="absolute left-2.5 text-[#6b7280] pointer-events-none" />
-                <input
-                  type="date"
-                  value={activeDailyDateStr}
-                  onChange={(e) => handleDailySelect(e.target.value)}
-                  className="h-8 pl-8 pr-2.5 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] cursor-pointer hover:border-[#d1d5db]"
-                />
-              </div>
+              <DatePickerInput
+                date={activeDailyDateObj}
+                onDateChange={(selectedDate) => {
+                  if (selectedDate && isValid(selectedDate)) {
+                    router.push(`${pathname}?date=${format(selectedDate, "yyyy-MM-dd")}`)
+                  }
+                }}
+              />
             </div>
           )}
 
@@ -402,30 +402,19 @@ export function ReportView({ title, data, type }: ReportViewProps) {
 
               <div className="h-5 w-px bg-[#e5e7eb] hidden sm:block" />
 
-              <form onSubmit={handleApplyWeeklyRange} className="flex items-center gap-1.5">
-                <span className="text-[11px] font-medium text-[#6b7280]">Dari:</span>
-                <input
-                  type="date"
-                  value={rangeStartInput}
-                  onChange={(e) => setRangeStartInput(e.target.value)}
-                  className="h-8 px-2 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] hover:border-[#d1d5db]"
-                />
-                <span className="text-[#9ca3af]">-</span>
-                <span className="text-[11px] font-medium text-[#6b7280]">Sampai:</span>
-                <input
-                  type="date"
-                  value={rangeEndInput}
-                  onChange={(e) => setRangeEndInput(e.target.value)}
-                  className="h-8 px-2 rounded-lg border border-[#e5e7eb] bg-white text-xs font-medium text-[#111827] focus:outline-none focus:ring-1 focus:ring-[#FFB800] hover:border-[#d1d5db]"
-                />
-                <button
-                  type="submit"
-                  disabled={!rangeStartInput || !rangeEndInput}
-                  className="h-8 px-3 rounded-lg bg-[#111827] hover:bg-black text-white text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  Terapkan
-                </button>
-              </form>
+              <DatePickerWithRange
+                date={{
+                  from: parseISO(currentStartStr),
+                  to: parseISO(currentEndStr),
+                }}
+                onDateChange={(range) => {
+                  if (range?.from && range?.to) {
+                    router.push(`${pathname}?startDate=${format(range.from, "yyyy-MM-dd")}&endDate=${format(range.to, "yyyy-MM-dd")}`)
+                  } else if (range?.from) {
+                    router.push(`${pathname}?startDate=${format(range.from, "yyyy-MM-dd")}`)
+                  }
+                }}
+              />
             </div>
           )}
 

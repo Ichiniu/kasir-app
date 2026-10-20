@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import { format } from "date-fns"
+import { useRouter, usePathname } from "next/navigation"
+import { format, addDays, subDays } from "date-fns"
 import { id } from "date-fns/locale"
 import {
   Table,
@@ -28,7 +29,18 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { ChevronDown, User, Users, Search, ShoppingCart, Eye, Receipt } from "lucide-react"
+import { DatePickerInput } from "@/components/ui/date-picker"
+import { 
+  ChevronDown, 
+  ChevronLeft,
+  ChevronRight,
+  User, 
+  Users, 
+  Search, 
+  ShoppingCart, 
+  Eye, 
+  Receipt
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 type Transaction = {
@@ -74,10 +86,79 @@ type Transaction = {
   }>
 }
 
-export function TransactionList({ initialTransactions }: { initialTransactions: Transaction[] }) {
+export function TransactionList({ 
+  initialTransactions,
+  currentDate = format(new Date(), "yyyy-MM-dd")
+}: { 
+  initialTransactions: Transaction[]
+  currentDate?: string
+}) {
+  const router = useRouter()
+  const pathname = usePathname()
+
   const [cashierFilter, setCashierFilter] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState<string>("")
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  
+  // Accordion state per sesi kasir (default semua terbuka)
+  const [expandedSessions, setExpandedSessions] = useState<Record<string, boolean>>({})
+
+  // Date helpers
+  const activeDateObj = useMemo(() => {
+    try {
+      const [y, m, d] = currentDate.split("-").map(Number)
+      return new Date(y, m - 1, d)
+    } catch {
+      return new Date()
+    }
+  }, [currentDate])
+
+  const todayStr = useMemo(() => {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(new Date())
+  }, [])
+
+  const isToday = currentDate === todayStr
+
+  const handlePrevDay = () => {
+    const prev = subDays(activeDateObj, 1)
+    router.push(`${pathname}?date=${format(prev, "yyyy-MM-dd")}`)
+  }
+
+  const handleToday = () => {
+    router.push(pathname)
+  }
+
+  const handleNextDay = () => {
+    const next = addDays(activeDateObj, 1)
+    router.push(`${pathname}?date=${format(next, "yyyy-MM-dd")}`)
+  }
+
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return
+    router.push(`${pathname}?date=${format(selectedDate, "yyyy-MM-dd")}`)
+  }
+
+  // Toggle sesi kasir
+  const toggleSession = (sessionKey: string) => {
+    setExpandedSessions(prev => ({
+      ...prev,
+      [sessionKey]: prev[sessionKey] === undefined ? false : !prev[sessionKey]
+    }))
+  }
+
+  // Truncate invoice: INV-20261019-7F02A...
+  const formatShortInvoice = (inv: string) => {
+    if (!inv) return ""
+    if (inv.length > 20) {
+      return `${inv.slice(0, 19)}...`
+    }
+    return inv
+  }
 
   // Get unique cashiers
   const cashiers = useMemo(() => {
@@ -126,14 +207,18 @@ export function TransactionList({ initialTransactions }: { initialTransactions: 
       groups[key].push(transaction)
     })
     
-    return Object.entries(groups).map(([key, transactions]) => ({
-      key,
-      cashierName: transactions[0].user.name,
-      cashRegister: transactions[0].cashRegister,
-      transactions: transactions.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )
-    }))
+    return Object.entries(groups).map(([key, transactions]) => {
+      const totalAmount = transactions.reduce((acc, t) => acc + t.finalAmount, 0)
+      return {
+        key,
+        cashierName: transactions[0].user.name,
+        cashRegister: transactions[0].cashRegister,
+        totalAmount,
+        transactions: transactions.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      }
+    })
   }, [filteredTransactions])
 
   const formatCurrency = (amount: number) => {
@@ -148,53 +233,100 @@ export function TransactionList({ initialTransactions }: { initialTransactions: 
     <div className="space-y-6 font-sans">
       {/* Header */}
       <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">Riwayat Penjualan</h1>
-            <p className="text-sm text-[#6b7280] mt-1">Lihat semua transaksi penjualan berdasarkan sesi kasir.</p>
+            <p className="text-sm text-[#6b7280] mt-1">
+              {isToday 
+                ? "Menampilkan transaksi penjualan hari ini berdasarkan sesi kasir." 
+                : `Menampilkan transaksi penjualan tanggal ${format(activeDateObj, "dd MMMM yyyy", { locale: id })}.`}
+            </p>
           </div>
 
-          {/* Cashier Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                variant="outline" 
-                className="h-10 px-4 rounded-lg border-[#e5e7eb] bg-white hover:bg-[#f9fafb] text-[#111827] transition-all"
-              >
-                <User size={16} className="text-[#6b7280] mr-2" />
-                <span className="text-sm font-medium">
-                  {cashierFilter === "all" ? "Semua Kasir" : cashiers.find(c => c.id === cashierFilter)?.name}
-                </span>
-                <ChevronDown size={14} className="ml-2 text-[#6b7280]" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl border-[#e5e7eb] shadow-xl">
-              <DropdownMenuItem 
-                onClick={() => setCashierFilter("all")}
-                className={cn(
-                  "text-sm font-medium cursor-pointer",
-                  cashierFilter === "all" && "bg-[#111827] text-white focus:bg-[#111827] focus:text-white"
-                )}
-              >
-                <Users size={14} className="mr-2" />
-                Semua Kasir
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-[#e5e7eb]" />
-              {cashiers.map(c => (
-                <DropdownMenuItem 
-                  key={c.id}
-                  onClick={() => setCashierFilter(c.id)}
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Date Controller */}
+            <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={handlePrevDay}
+                  title="Hari Sebelumnya"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827] transition-all cursor-pointer"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleToday}
                   className={cn(
-                    "text-sm font-medium cursor-pointer",
-                    cashierFilter === c.id && "bg-[#111827] text-white focus:bg-[#111827] focus:text-white"
+                    "h-8 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    isToday
+                      ? "bg-[#FFB800] text-black shadow-2xs"
+                      : "hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827]"
                   )}
                 >
-                  <User size={14} className="mr-2" />
-                  {c.name}
+                  Hari Ini
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNextDay}
+                  title="Hari Berikutnya"
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827] transition-all cursor-pointer"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              <div className="h-5 w-px bg-[#e5e7eb]" />
+
+              <DatePickerInput
+                date={activeDateObj}
+                onDateChange={handleDateSelect}
+              />
+            </div>
+
+            {/* Cashier Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="h-10 px-4 rounded-lg border-[#e5e7eb] bg-white hover:bg-[#f9fafb] text-[#111827] transition-all cursor-pointer"
+                >
+                  <User size={16} className="text-[#6b7280] mr-2" />
+                  <span className="text-sm font-medium">
+                    {cashierFilter === "all" ? "Semua Kasir" : cashiers.find(c => c.id === cashierFilter)?.name}
+                  </span>
+                  <ChevronDown size={14} className="ml-2 text-[#6b7280]" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="rounded-xl border-[#e5e7eb] shadow-xl">
+                <DropdownMenuItem 
+                  onClick={() => setCashierFilter("all")}
+                  className={cn(
+                    "text-sm font-medium cursor-pointer",
+                    cashierFilter === "all" && "bg-[#111827] text-white focus:bg-[#111827] focus:text-white"
+                  )}
+                >
+                  <Users size={14} className="mr-2" />
+                  Semua Kasir
                 </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuSeparator className="bg-[#e5e7eb]" />
+                {cashiers.map(c => (
+                  <DropdownMenuItem 
+                    key={c.id}
+                    onClick={() => setCashierFilter(c.id)}
+                    className={cn(
+                      "text-sm font-medium cursor-pointer",
+                      cashierFilter === c.id && "bg-[#111827] text-white focus:bg-[#111827] focus:text-white"
+                    )}
+                  >
+                    <User size={14} className="mr-2" />
+                    {c.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Search Input */}
@@ -209,144 +341,198 @@ export function TransactionList({ initialTransactions }: { initialTransactions: 
         </div>
       </div>
 
-      {/* Transactions by Session */}
-      <div className="space-y-8">
-        {groupedTransactions.map((group) => (
-          <div key={group.key} className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-            {/* Session Header */}
-            <div className="px-5 py-4 bg-[#f9fafb] border-b border-[#e5e7eb]">
-              <div className="flex items-center justify-between">
+      {/* Transactions by Session (Accordion per sesi) */}
+      <div className="space-y-6">
+        {groupedTransactions.map((group) => {
+          const isSessionOpen = expandedSessions[group.key] ?? true
+
+          return (
+            <div key={group.key} className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden shadow-2xs">
+              {/* Session Accordion Trigger Header */}
+              <div 
+                onClick={() => toggleSession(group.key)}
+                className="px-5 py-4 bg-[#f9fafb] border-b border-[#e5e7eb] flex items-center justify-between cursor-pointer hover:bg-[#f3f4f6] transition-colors select-none"
+              >
                 <div className="flex items-center gap-4">
-                  <div className="w-9 h-9 rounded-lg bg-white border border-[#e5e7eb] flex items-center justify-center text-[#111827]">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#e5e7eb] flex items-center justify-center text-[#111827] shadow-2xs">
                     <User size={18} />
                   </div>
-                  <div className="flex items-center gap-8">
+                  <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
                     <div>
                       <h3 className="text-sm font-semibold text-[#111827]">{group.cashierName}</h3>
-                      <p className="text-[10px] font-bold text-[#111827] uppercase tracking-tighter">Personel Kasir</p>
+                      <p className="text-[10px] font-bold text-[#6b7280] uppercase tracking-tighter">Personel Kasir</p>
                     </div>
                     {group.cashRegister && (
-                      <>
-                        <div className="flex items-center gap-6">
-                          <div>
-                            <p className="text-[10px] font-bold text-[#111827] uppercase tracking-tighter/wider">Tanggal</p>
-                            <p className="text-xs font-semibold text-[#111827]">
-                              {format(new Date(group.cashRegister.openedAt), "dd MMM yyyy", { locale: id })}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-[#111827] uppercase tracking-tighter/wider">Buka Kas</p>
-                            <p className="text-xs font-semibold text-[#111827]">
-                              {format(new Date(group.cashRegister.openedAt), "HH:mm", { locale: id })}
-                            </p>
-                          </div>
-                          {group.cashRegister.closedAt && (
-                            <div>
-                              <p className="text-[10px] font-bold text-[#111827] uppercase tracking-tighter/wider">Tutup Kas</p>
-                              <p className="text-xs font-semibold text-[#111827]">
-                                {format(new Date(group.cashRegister.closedAt), "HH:mm", { locale: id })}
-                              </p>
-                            </div>
-                          )}
+                      <div className="flex items-center gap-6">
+                        <div>
+                          <p className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Tanggal</p>
+                          <p className="text-xs font-semibold text-[#111827]">
+                            {format(new Date(group.cashRegister.openedAt), "dd MMM yyyy", { locale: id })}
+                          </p>
                         </div>
-                      </>
+                        <div>
+                          <p className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Buka Kas</p>
+                          <p className="text-xs font-semibold text-[#111827]">
+                            {format(new Date(group.cashRegister.openedAt), "HH:mm", { locale: id })}
+                          </p>
+                        </div>
+                        {group.cashRegister.closedAt && (
+                          <div>
+                            <p className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">Tutup Kas</p>
+                            <p className="text-xs font-semibold text-[#111827]">
+                              {format(new Date(group.cashRegister.closedAt), "HH:mm", { locale: id })}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "text-[10px] font-bold py-0.5 px-2 border-none rounded uppercase",
-                    group.cashRegister?.status === "ACTIVE" 
-                      ? "bg-[#FFB800]/20 text-[#111827]" 
-                      : "bg-gray-100 text-[#111827]"
-                  )}
-                >
-                  {group.cashRegister?.status === "ACTIVE" ? "Sesi Aktif" : "Sesi Selesai"}
-                </Badge>
-              </div>
-            </div>
 
-            {/* Transactions Table */}
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="hover:bg-transparent border-b-[#e5e7eb]">
-                    <TableHead className="font-semibold text-[#111827] h-11 text-[11px] uppercase tracking-wider px-5">Waktu</TableHead>
-                    <TableHead className="font-semibold text-[#111827] h-11 text-[11px] uppercase tracking-wider px-5">No. Invoice</TableHead>
-                    <TableHead className="font-semibold text-[#111827] h-11 text-[11px] uppercase tracking-wider px-5">Pelanggan</TableHead>
-                    <TableHead className="font-semibold text-[#111827] h-11 text-[11px] uppercase tracking-wider px-5">Metode</TableHead>
-                    <TableHead className="font-semibold text-[#111827] h-11 text-right text-[11px] uppercase tracking-wider px-5">Total Bayar</TableHead>
-                    <TableHead className="font-semibold text-[#111827] h-11 text-center text-[11px] uppercase tracking-wider px-5 w-[70px]">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {group.transactions.map((transaction) => (
-                    <TableRow key={transaction.id} className="hover:bg-[#f9fafb]/50 border-b-[#e5e7eb] last:border-0 transition-colors">
-                      <TableCell className="px-5 py-4 text-xs font-medium text-[#111827]">
-                        {format(new Date(transaction.createdAt), "HH:mm", { locale: id })}
-                      </TableCell>
-                      <TableCell className="px-5 py-4">
-                        <span className="text-xs font-bold text-[#111827]">{transaction.invoiceNumber}</span>
-                      </TableCell>
-                      <TableCell className="px-5 py-4">
-                        <span className="text-sm font-medium text-[#111827]">{transaction.customerName}</span>
-                      </TableCell>
-                      <TableCell className="px-5 py-4">
-                        <Badge 
-                          variant="outline" 
-                          className={cn(
-                            "text-[10px] font-bold px-1.5 py-0 border-none rounded uppercase text-[#111827]",
-                            transaction.paymentMethod === "CASH" 
-                              ? "bg-emerald-50 text-[#111827]" 
-                              : "bg-orange-50 text-[#111827]"
-                          )}
+                <div className="flex items-center gap-3">
+                  <div className="hidden sm:flex flex-col text-right">
+                    <span className="text-[11px] font-semibold text-[#111827]">
+                      {group.transactions.length} Penjualan
+                    </span>
+                    <span className="text-[11px] text-[#6b7280]">
+                      {formatCurrency(group.totalAmount)}
+                    </span>
+                  </div>
+
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "text-[10px] font-bold py-0.5 px-2 border-none rounded uppercase",
+                      group.cashRegister?.status === "ACTIVE" 
+                        ? "bg-[#FFB800]/20 text-[#111827]" 
+                        : "bg-gray-200/70 text-[#4b5563]"
+                    )}
+                  >
+                    {group.cashRegister?.status === "ACTIVE" ? "Sesi Aktif" : "Sesi Selesai"}
+                  </Badge>
+
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center text-[#6b7280] hover:text-[#111827]">
+                    <ChevronDown 
+                      size={16} 
+                      className={cn("transition-transform duration-200", isSessionOpen && "rotate-180")} 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Collapsible Content: Transactions Table & Sale-level Accordion */}
+              {isSessionOpen && (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="hover:bg-transparent border-b-[#e5e7eb] bg-[#fdfdfd]">
+                        <TableHead className="font-medium text-[#6b7280] h-10 text-[11px] uppercase tracking-wider px-5">Waktu</TableHead>
+                        <TableHead className="font-medium text-[#6b7280] h-10 text-[11px] uppercase tracking-wider px-5">No. Invoice</TableHead>
+                        <TableHead className="font-medium text-[#6b7280] h-10 text-[11px] uppercase tracking-wider px-5">Pelanggan</TableHead>
+                        <TableHead className="font-medium text-[#6b7280] h-10 text-[11px] uppercase tracking-wider px-5">Metode</TableHead>
+                        <TableHead className="font-medium text-[#6b7280] h-10 text-right text-[11px] uppercase tracking-wider px-5">Total Bayar</TableHead>
+                        <TableHead className="font-medium text-[#6b7280] h-10 text-center text-[11px] uppercase tracking-wider px-5 w-[70px]">Aksi</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {group.transactions.map((transaction) => (
+                        <TableRow 
+                          key={transaction.id} 
+                          className="hover:bg-[#f9fafb]/60 border-b-[#e5e7eb] last:border-0 transition-colors"
                         >
-                          {transaction.paymentMethod}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="px-5 py-4 text-right">
-                        <span className="text-sm font-bold text-[#111827]">{formatCurrency(transaction.finalAmount)}</span>
-                      </TableCell>
-                      <TableCell className="px-5 py-4 text-center">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedTransaction(transaction)}
-                          title="Lihat Detail Transaksi"
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827] transition-all shadow-2xs cursor-pointer"
-                        >
-                          <Eye size={15} />
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                          {/* Waktu */}
+                          <TableCell className="px-5 py-3.5 text-xs font-normal text-[#6b7280]">
+                            {format(new Date(transaction.createdAt), "HH:mm", { locale: id })}
+                          </TableCell>
+
+                          {/* No. Invoice: regular (400), abu tua, truncated */}
+                          <TableCell className="px-5 py-3.5">
+                            <span 
+                              className="text-xs font-normal text-[#4b5563] font-mono hover:text-[#111827] transition-colors"
+                              title={transaction.invoiceNumber}
+                            >
+                              {formatShortInvoice(transaction.invoiceNumber)}
+                            </span>
+                          </TableCell>
+
+                          {/* Nama Pelanggan: medium (500) */}
+                          <TableCell className="px-5 py-3.5">
+                            <span className="text-sm font-medium text-[#111827]">
+                              {transaction.customerName || "Pelanggan Umum"}
+                            </span>
+                          </TableCell>
+
+                          {/* Metode */}
+                          <TableCell className="px-5 py-3.5">
+                            <Badge 
+                              variant="outline" 
+                              className={cn(
+                                "text-[10px] font-bold px-2 py-0.5 border-none rounded uppercase",
+                                transaction.paymentMethod === "CASH" 
+                                  ? "bg-emerald-50 text-emerald-700" 
+                                  : "bg-orange-50 text-orange-700"
+                              )}
+                            >
+                              {transaction.paymentMethod}
+                            </Badge>
+                          </TableCell>
+
+                          {/* Total Bayar: semibold (600), paling menonjol */}
+                          <TableCell className="px-5 py-3.5 text-right">
+                            <span className="text-sm font-semibold text-[#111827]">
+                              {formatCurrency(transaction.finalAmount)}
+                            </span>
+                          </TableCell>
+
+                          {/* Aksi: Button Detail (Mata) */}
+                          <TableCell className="px-5 py-3.5 text-center">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedTransaction(transaction)}
+                              title="Lihat Detail Transaksi Lengkap"
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-[#e5e7eb] bg-white hover:bg-[#111827] text-[#374151] hover:text-white transition-all shadow-2xs cursor-pointer"
+                            >
+                              <Eye size={15} />
+                            </button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {groupedTransactions.length === 0 && (
-          <div className="bg-white rounded-xl border border-[#e5e7eb] p-20 text-center">
-            <ShoppingCart size={40} className="text-[#e2e8f0] mx-auto mb-4" strokeWidth={1.5} />
-            <p className="text-sm font-medium text-[#6b7280]">Tidak ada data transaksi yang ditemukan</p>
+          <div className="bg-white rounded-xl border border-[#e5e7eb] p-16 text-center shadow-2xs">
+            <ShoppingCart size={40} className="text-[#e2e8f0] mx-auto mb-3" strokeWidth={1.5} />
+            <p className="text-sm font-semibold text-[#111827]">
+              {isToday 
+                ? "Belum ada transaksi penjualan hari ini" 
+                : `Tidak ada data transaksi pada tanggal ${format(activeDateObj, "dd MMMM yyyy", { locale: id })}`}
+            </p>
+            <p className="text-xs text-[#6b7280] mt-1">
+              Gunakan pemilih tanggal di atas untuk melihat riwayat penjualan pada hari lainnya.
+            </p>
           </div>
         )}
       </div>
 
-      {/* Modal Detail Transaksi */}
+      {/* Modal Detail Transaksi (Button X dan CASH terpisah sempurna, tidak tumpang tindih) */}
       <Dialog open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
         <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl bg-white border border-[#e5e7eb] shadow-2xl">
           {selectedTransaction && (
             <div className="flex flex-col max-h-[85vh]">
-              {/* Header */}
-              <div className="p-5 bg-[#f9fafb] border-b border-[#e5e7eb]">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-[#e5e7eb] flex items-center justify-center text-[#111827] shadow-2xs">
+              {/* Header: Diberikan pr-14 dan mr-2 agar badge CASH tidak bertumpuk dengan button X */}
+              <div className="p-5 bg-[#f9fafb] border-b border-[#e5e7eb] pr-14">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-[#e5e7eb] flex items-center justify-center text-[#111827] shadow-2xs shrink-0">
                       <Receipt size={20} className="text-[#FFB800]" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <DialogTitle className="text-base font-semibold text-[#111827]">
                         Detail Transaksi
                       </DialogTitle>
@@ -355,17 +541,21 @@ export function TransactionList({ initialTransactions }: { initialTransactions: 
                       </DialogDescription>
                     </div>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "text-[10px] font-bold px-2 py-0.5 border-none rounded uppercase text-[#111827]",
-                      selectedTransaction.paymentMethod === "CASH"
-                        ? "bg-emerald-50 text-[#111827]"
-                        : "bg-orange-50 text-[#111827]"
-                    )}
-                  >
-                    {selectedTransaction.paymentMethod}
-                  </Badge>
+
+                  {/* Badge Pembayaran dengan margin kanan agar tidak terkena tombol X */}
+                  <div className="shrink-0 mr-3">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[10px] font-bold px-2.5 py-0.5 border-none rounded uppercase",
+                        selectedTransaction.paymentMethod === "CASH"
+                          ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                          : "bg-orange-50 text-orange-700 ring-1 ring-orange-200"
+                      )}
+                    >
+                      {selectedTransaction.paymentMethod}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Metadata Grid */}
@@ -385,7 +575,7 @@ export function TransactionList({ initialTransactions }: { initialTransactions: 
                   <div>
                     <span className="text-[#6b7280] block text-[11px]">Pelanggan</span>
                     <span className="font-medium text-[#111827]">
-                      {selectedTransaction.customerName || "Pelanggan"}
+                      {selectedTransaction.customerName || "Pelanggan Umum"}
                     </span>
                   </div>
                   <div>
