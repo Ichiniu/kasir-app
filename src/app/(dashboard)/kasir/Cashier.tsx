@@ -117,10 +117,9 @@ export function Cashier({
 
   const processTransaction = async () => {
     setLoading(true)
-    setShowConfirm(false) // Close confirm modal
+    setShowConfirm(false)
     setError("")
 
-    // Sanitize cash received string to number
     const sanitizedCash = Number(cashReceived.replace(/[^0-9]/g, ""))
 
     const result = await createTransaction({
@@ -163,7 +162,6 @@ export function Cashier({
 
   return (
     <div className="flex flex-col xl:flex-row h-full gap-6 p-6 bg-white overflow-hidden font-sans">
-      {/* Product Selection Area */}
       <div className="flex-1 flex flex-col gap-6 overflow-hidden min-w-0">
         <div className="flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center justify-between">
@@ -238,7 +236,7 @@ export function Cashier({
                 <div className="flex items-end justify-between mt-auto pt-2 border-t border-slate-100">
                   <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 font-medium">Harga</span>
-                    <span className="font-extrabold text-base text-slate-900">
+                    <span className="font-semibold text-base text-slate-900">
                       {formatCurrency(Number(p.price))}
                     </span>
                   </div>
@@ -288,7 +286,7 @@ export function Cashier({
                   )}>
                     Stok: {p.stock}
                   </span>
-                  <span className="font-extrabold text-base text-slate-900 min-w-[90px] text-right">{formatCurrency(Number(p.price))}</span>
+                  <span className="font-semibold text-base text-slate-900 min-w-[90px] text-right">{formatCurrency(Number(p.price))}</span>
                   <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 group-hover:bg-[#FFB800] group-hover:border-[#FFB800] group-hover:text-slate-950 transition-all shadow-xs">
                     <Plus size={16} strokeWidth={2.5} />
                   </div>
@@ -299,10 +297,8 @@ export function Cashier({
         </div>
       </div>
 
-      {/* Cart Area */}
       <div className="w-full xl:w-[400px] xl:flex-shrink-0 flex flex-col xl:h-screen xl:max-h-screen overflow-hidden">
         <div className="flex flex-col border border-[#e5e7eb] overflow-hidden rounded-2xl bg-white shadow-sm h-full max-h-full">
-          {/* Header */}
           <div className="p-4 border-b border-[#e5e7eb] flex items-center justify-between bg-[#f9fafb]">
             <div className="flex items-center gap-2">
               <ShoppingCart size={18} className="text-[#111827]" />
@@ -325,7 +321,6 @@ export function Cashier({
             </div>
           </div>
 
-          {/* Item List */}
           <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2 custom-scrollbar border-y border-[#e5e7eb] min-h-0">
             {cart.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center py-20 opacity-30">
@@ -372,7 +367,6 @@ export function Cashier({
             )}
           </div>
 
-          {/* Footer Card */}
           <div className="bg-[#f9fafb]">
             <div className="p-4 space-y-3">
               <div className="flex justify-between items-center text-[11px] font-semibold text-[#6b7280] uppercase">
@@ -457,7 +451,6 @@ export function Cashier({
         </div>
       </div>
 
-      {/* Confirmation Modal Overlay */}
       {showConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-200">
           <div className="w-full max-w-sm overflow-hidden bg-white rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200 border border-[#e5e7eb] m-4">
@@ -542,7 +535,6 @@ export function Cashier({
         </div>
       )}
 
-      {/* Success Modal Overlay */}
       {showSuccess && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-[1px] animate-in fade-in duration-300 px-4">
           <div className="p-10 flex flex-col items-center gap-6 bg-white rounded-3xl border border-[#e5e7eb] shadow-2xl animate-in zoom-in duration-300 max-w-sm w-full">

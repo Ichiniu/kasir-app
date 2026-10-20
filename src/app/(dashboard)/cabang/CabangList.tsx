@@ -132,7 +132,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
   return (
     <div className="space-y-6 font-sans">
       <div className="flex flex-col bg-white rounded-xl border border-[#e5e7eb] overflow-hidden">
-        {/* Header Toolbar */}
         <div className="p-5 border-b border-[#e5e7eb] flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
           <div>
             <h2 className="text-xl font-semibold text-[#111827] tracking-tight">Daftar Cabang</h2>
@@ -142,7 +141,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Search Input */}
             <div className="relative min-w-[240px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={14} />
               <Input
@@ -157,7 +155,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
               />
             </div>
 
-            {/* Tambah Cabang Button */}
             <Button
               type="button"
               onClick={handleAdd}
@@ -169,7 +166,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
           </div>
         </div>
 
-        {/* Table Content */}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader className="bg-[#f9fafb]">
@@ -217,12 +213,10 @@ export function CabangList({ initialOutlets }: CabangListProps) {
 
                   return (
                     <TableRow key={outlet.id} className="hover:bg-[#f9fafb]/80 transition-colors">
-                      {/* No */}
                       <TableCell className="text-center text-xs font-semibold text-[#9ca3af]">
                         {itemIndex}
                       </TableCell>
 
-                      {/* Nama Cabang */}
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-xl bg-[#FFB800]/10 border border-[#FFB800]/20 flex items-center justify-center text-[#FFB800] shrink-0">
@@ -239,7 +233,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
                         </div>
                       </TableCell>
 
-                      {/* Alamat */}
                       <TableCell className="py-4">
                         {outlet.alamat ? (
                           <div className="flex items-start gap-1.5 text-xs text-[#4b5563] max-w-md leading-relaxed">
@@ -253,7 +246,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
                         )}
                       </TableCell>
 
-                      {/* Jumlah Pengelola */}
                       <TableCell className="py-4 text-center">
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
                           <Users size={13} className="text-slate-500" />
@@ -261,7 +253,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
                         </div>
                       </TableCell>
 
-                      {/* Aksi */}
                       <TableCell className="py-4 text-right pr-6">
                         <div className="flex items-center justify-end gap-1.5">
                           <Button
@@ -292,7 +283,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
           </Table>
         </div>
 
-        {/* Pagination Controls */}
         <TablePagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -307,7 +297,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
         />
       </div>
 
-      {/* Modal Add / Edit */}
       <CabangFormModal
         isOpen={isFormOpen}
         onClose={() => {
@@ -320,7 +309,6 @@ export function CabangList({ initialOutlets }: CabangListProps) {
         outletToEdit={editingOutlet}
       />
 
-      {/* Alert Dialog Delete */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="sm:max-w-[425px] rounded-2xl p-6 bg-white border border-[#e5e7eb]">
           <AlertDialogHeader>

@@ -56,9 +56,7 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex w-full font-sans bg-white">
-      {/* Kiri - Form Login */}
       <div className="w-full md:w-[480px] lg:w-[550px] bg-white p-8 md:p-16 flex flex-col justify-center shrink-0 z-10 relative">
-        {/* Logo & Judul */}
         <div className="flex items-center gap-4 mb-8">
           <div className="bg-[#a3b38c] p-2 rounded-lg">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -111,7 +109,6 @@ function LoginForm() {
             )}
           </div>
 
-          {/* Remember Me */}
           <div className="flex items-center gap-2 pt-2 pb-4">
             <input 
               type="checkbox" 
@@ -137,18 +134,14 @@ function LoginForm() {
         </form>
       </div>
 
-      {/* Kanan - Image Carousel */}
       <div className="hidden md:block flex-1 relative bg-gray-100 overflow-hidden">
-        {/* Gunakan gambar background cafe-bg.png atau default image lainnya */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-105"
           style={{ backgroundImage: "url('/cafe-bgt.jpg')" }}
         />
         
-        {/* Gradient Overlay tipis agar tidak terlalu flat */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
 
-        {/* Carousel Text overlay */}
         <div className="absolute bottom-16 left-12 right-12 text-white">
           <h2 className="text-3xl font-bold mb-3">Kelola Kasir Lebih Mudah</h2>
           <p className="text-white/80 text-sm leading-relaxed max-w-lg">
@@ -156,7 +149,6 @@ function LoginForm() {
           </p>
         </div>
 
-        {/* Indicators */}
         <div className="absolute bottom-8 left-12 flex gap-2">
           <span className="w-2 h-2 rounded-full bg-white" />
           <span className="w-2 h-2 rounded-full bg-white/40" />

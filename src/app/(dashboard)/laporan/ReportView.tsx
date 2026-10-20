@@ -57,7 +57,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  // --- DAILY REPORT CONTROLS ---
   const activeDailyDateStr = React.useMemo(() => {
     return data?.period?.startDate || searchParams.get("date") || format(new Date(), "yyyy-MM-dd")
   }, [data?.period?.startDate, searchParams])
@@ -94,7 +93,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
     router.push(`${pathname}?date=${val}`)
   }
 
-  // --- WEEKLY REPORT CONTROLS ---
   const currentStartStr = React.useMemo(() => {
     return data?.period?.startDate || searchParams.get("startDate") || format(startOfWeek(new Date(), { weekStartsOn: 1 }), "yyyy-MM-dd")
   }, [data?.period?.startDate, searchParams])
@@ -150,7 +148,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
     router.push(`${pathname}?startDate=${rangeStartInput}&endDate=${rangeEndInput}`)
   }
 
-  // --- MONTHLY REPORT CONTROLS ---
   const currentMonthStr = React.useMemo(() => {
     return data?.period?.monthStr || searchParams.get("date") || format(new Date(), "yyyy-MM")
   }, [data?.period?.monthStr, searchParams])
@@ -235,18 +232,15 @@ export function ReportView({ title, data, type }: ReportViewProps) {
   const handleExportPDF = () => {
     const doc = new jsPDF()
     
-    // Title
     doc.setFontSize(18)
     doc.setFont('helvetica', 'bold')
     doc.text(title, 14, 20)
     
-    // Period & Outlet
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
     doc.text(`Periode : ${data?.period?.label}`, 14, 28)
     doc.text(`Cabang  : ${data?.currentOutletName || 'Semua Cabang'}`, 14, 34)
     
-    // Summary
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
     doc.text('Ringkasan', 14, 44)
@@ -257,7 +251,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
     doc.text(`Total Transaksi: ${data?.summary?.totalTransactions || 0}`, 14, 59)
     doc.text(`Produk Terjual: ${data?.summary?.totalItemsSold || 0} pcs`, 14, 66)
     
-    // Transactions Table
     if (transactions.length > 0) {
       autoTable(doc, {
         startY: 75,
@@ -277,11 +270,9 @@ export function ReportView({ title, data, type }: ReportViewProps) {
       })
     }
     
-    // Save
     doc.save(`${title.replace(/ /g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`)
   }
 
-  // Pagination state
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 10;
   const transactions = data?.transactions || [];
@@ -294,7 +285,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
 
   return (
     <div className="p-6 space-y-8 bg-white min-h-screen font-sans">
-      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">{title}</h1>
@@ -322,100 +312,31 @@ export function ReportView({ title, data, type }: ReportViewProps) {
               </select>
             </div>
           )}
-
           {type === "daily" && (
-            <div className="flex items-center gap-2 bg-[#f9fafb] p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={handlePrevDay}
-                  title="Hari Sebelumnya"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToday}
-                  className={`h-8 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    isDailyToday
-                      ? "bg-[#FFB800] text-black shadow-2xs"
-                      : "hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb]"
-                  }`}
-                >
-                  Hari Ini
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextDay}
-                  title="Hari Berikutnya"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-
-              <div className="h-5 w-px bg-[#e5e7eb]" />
-
-              <DatePickerInput
-                date={activeDailyDateObj}
-                onDateChange={(selectedDate) => {
-                  if (selectedDate && isValid(selectedDate)) {
-                    router.push(`${pathname}?date=${format(selectedDate, "yyyy-MM-dd")}`)
-                  }
-                }}
-              />
-            </div>
+            <DatePickerInput
+              date={activeDailyDateObj}
+              onDateChange={(selectedDate) => {
+                if (selectedDate && isValid(selectedDate)) {
+                  router.push(`${pathname}?date=${format(selectedDate, "yyyy-MM-dd")}`)
+                }
+              }}
+            />
           )}
 
           {type === "weekly" && (
-            <div className="flex flex-wrap items-center gap-2 bg-[#f9fafb] p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={handlePrevWeek}
-                  title="Minggu Lalu"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleThisWeek}
-                  className={`h-8 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    isWeeklyCurrentWeek
-                      ? "bg-[#FFB800] text-black shadow-2xs"
-                      : "hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb]"
-                  }`}
-                >
-                  Minggu Ini
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextWeek}
-                  title="Minggu Depan"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-white text-[#374151] hover:text-[#111827] border border-transparent hover:border-[#e5e7eb] hover:shadow-2xs transition-all cursor-pointer"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-
-              <div className="h-5 w-px bg-[#e5e7eb] hidden sm:block" />
-
-              <DatePickerWithRange
-                date={{
-                  from: parseISO(currentStartStr),
-                  to: parseISO(currentEndStr),
-                }}
-                onDateChange={(range) => {
-                  if (range?.from && range?.to) {
-                    router.push(`${pathname}?startDate=${format(range.from, "yyyy-MM-dd")}&endDate=${format(range.to, "yyyy-MM-dd")}`)
-                  } else if (range?.from) {
-                    router.push(`${pathname}?startDate=${format(range.from, "yyyy-MM-dd")}`)
-                  }
-                }}
-              />
-            </div>
+            <DatePickerWithRange
+              date={{
+                from: parseISO(currentStartStr),
+                to: parseISO(currentEndStr),
+              }}
+              onDateChange={(range) => {
+                if (range?.from && range?.to) {
+                  router.push(`${pathname}?startDate=${format(range.from, "yyyy-MM-dd")}&endDate=${format(range.to, "yyyy-MM-dd")}`)
+                } else if (range?.from) {
+                  router.push(`${pathname}?startDate=${format(range.from, "yyyy-MM-dd")}`)
+                }
+              }}
+            />
           )}
 
           {type === "monthly" && (
@@ -490,7 +411,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
         </div>
       </div>
 
-      {/* Summary Cards - Minimalist */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6 rounded-xl border-[#e5e7eb] bg-[#f9fafb] shadow-none">
           <div className="flex items-center gap-3 mb-4">
@@ -544,7 +464,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Chart - Minimalist */}
         <Card className="lg:col-span-2 rounded-xl border-[#e5e7eb] bg-white p-6 shadow-none">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-[#111827]">Tren Penjualan</h2>
@@ -593,7 +512,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
           </div>
         </Card>
 
-        {/* Top Products - Minimalist */}
         <Card className="rounded-xl border-[#e5e7eb] bg-white p-6 shadow-none">
           <div className="flex items-center justify-between mb-8">
              <h2 className="text-lg font-semibold text-[#111827]">Top Products</h2>
@@ -628,7 +546,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Logistics Table - Minimalist */}
         <Card className="lg:col-span-2 rounded-xl border-[#e5e7eb] bg-white overflow-hidden shadow-none">
           <div className="p-6 border-b border-[#e5e7eb] flex items-center justify-between bg-[#f9fafb]">
             <div>
@@ -704,7 +621,6 @@ export function ReportView({ title, data, type }: ReportViewProps) {
           </div>
         </Card>
 
-        {/* Top Customers - Minimalist */}
         <Card className="rounded-xl border-[#e5e7eb] bg-white p-6 shadow-none">
            <div className="flex items-center justify-between mb-8">
              <h2 className="text-lg font-semibold text-[#111827]">Pelanggan Terbaik</h2>
@@ -732,9 +648,7 @@ export function ReportView({ title, data, type }: ReportViewProps) {
         </Card>
       </div>
 
-      {/* Payment Mechanism - Minimalist */}
       <Card className="rounded-xl border-none bg-[#FFB800] text-slate-950 p-8 shadow-xl shadow-[#FFB800]/20 relative overflow-hidden">
-        {/* Background Pattern */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none"></div>
 

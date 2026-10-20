@@ -29,7 +29,7 @@ export default async function CabangPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Store size={20} className="text-[#64748b]" />
-            <span className="text-xs font-black text-[#64748b] uppercase tracking-widest">
+            <span className="text-xs font-semibold text-[#64748b] uppercase tracking-widest">
               Multi-Branch Management
             </span>
           </div>

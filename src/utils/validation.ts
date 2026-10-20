@@ -3,8 +3,7 @@ import { z } from 'zod'
 /**
  * Validation schemas using Zod
  */
-
-// Auth Schemas
+
 export const loginSchema = z.object({
   email: z.string().email('Email tidak valid'),
   password: z.string().min(6, 'Password minimal 6 karakter'),
@@ -19,8 +18,7 @@ export const registerSchema = z.object({
   message: 'Password tidak sama',
   path: ['confirmPassword'],
 })
-
-// Product Schemas
+
 export const productSchema = z.object({
   sku: z.string().min(1, 'SKU wajib diisi'),
   name: z.string().min(3, 'Nama produk minimal 3 karakter'),
@@ -33,14 +31,12 @@ export const productSchema = z.object({
   imageUrl: z.string().url('URL gambar tidak valid').optional().or(z.literal('')),
   isActive: z.boolean().default(true),
 })
-
-// Category Schema
+
 export const categorySchema = z.object({
   name: z.string().min(3, 'Nama kategori minimal 3 karakter'),
   description: z.string().optional(),
 })
-
-// Transaction Schemas
+
 export const transactionItemSchema = z.object({
   productId: z.string(),
   productName: z.string(),
@@ -65,8 +61,7 @@ export const transactionSchema = z.object({
   message: 'Jumlah uang yang diterima wajib diisi untuk pembayaran cash',
   path: ['cashReceived'],
 })
-
-// User Schema
+
 export const userSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
   email: z.string().email('Email tidak valid'),
@@ -74,14 +69,12 @@ export const userSchema = z.object({
   role: z.enum(['ADMIN', 'CASHIER']),
   isActive: z.boolean().default(true),
 })
-
-// Settings Schema
+
 export const settingSchema = z.object({
   key: z.string().min(1, 'Key wajib diisi'),
   value: z.string().min(1, 'Value wajib diisi'),
 })
-
-// Types from schemas
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ProductInput = z.infer<typeof productSchema>

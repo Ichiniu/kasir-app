@@ -112,7 +112,6 @@ export function Sidebar() {
 
   return (
     <div className="flex flex-col h-full w-full bg-white font-sans">
-      {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-8">
         {filteredItems.map((item, index) => (
           <div key={index} className="space-y-2">
@@ -145,7 +144,6 @@ export function Sidebar() {
         ))}
       </div>
 
-      {/* Bottom Action Area */}
       <div className="p-4 border-t border-[#f3f4f6]">
         <button 
           onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/login" } } })}

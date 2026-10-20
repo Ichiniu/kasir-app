@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { addDays, format } from "date-fns"
+import { id } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
 import { type DateRange } from "react-day-picker"
 
@@ -21,7 +22,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-// --- DATE PICKER WITH RANGE (Untuk Laporan Mingguan) ---
 interface DatePickerWithRangeProps {
   date?: DateRange | undefined
   onDateChange?: (range: DateRange | undefined) => void
@@ -57,26 +57,30 @@ export function DatePickerWithRange({
           <Button
             variant="outline"
             id="date-picker-range"
-            className="w-full justify-start px-2.5 font-normal h-9 bg-white border-[#e5e7eb] hover:bg-[#f9fafb] text-xs text-[#111827]"
+            className="w-full justify-start px-3 font-normal h-9 bg-white border-[#e5e7eb] hover:bg-[#f9fafb] text-xs text-[#111827] shadow-2xs cursor-pointer"
           >
-            <CalendarIcon className="mr-2 h-4 w-4 text-[#6b7280]" />
+            <CalendarIcon className="mr-2 h-4 w-4 text-[#6b7280] shrink-0" />
             {date?.from ? (
               date.to ? (
-                <>
-                  {format(date.from, "dd MMM yyyy")} -{" "}
-                  {format(date.to, "dd MMM yyyy")}
-                </>
+                <span>
+                  {format(date.from, "dd MMM yyyy", { locale: id })} -{" "}
+                  {format(date.to, "dd MMM yyyy", { locale: id })}
+                </span>
               ) : (
-                format(date.from, "dd MMM yyyy")
+                <span>{format(date.from, "dd MMM yyyy", { locale: id })}</span>
               )
             ) : (
-              <span className="text-muted-foreground">Pilih rentang tanggal</span>
+              <span className="text-[#9ca3af]">Pilih rentang tanggal</span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-[#e5e7eb]" align="start">
+        <PopoverContent 
+          className="w-auto p-0 rounded-2xl shadow-2xl border border-[#e5e7eb] bg-white overflow-hidden" 
+          align="start"
+        >
           <Calendar
             mode="range"
+            locale={id}
             defaultMonth={date?.from}
             selected={date}
             onSelect={handleSelect}
@@ -88,17 +92,16 @@ export function DatePickerWithRange({
   )
 }
 
-// --- DATE PICKER INPUT (Untuk Harian / Dashboard) ---
 function formatDate(date: Date | undefined) {
   if (!date) {
     return ""
   }
 
-  return date.toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
+  try {
+    return format(date, "dd MMMM yyyy", { locale: id })
+  } catch {
+    return ""
+  }
 }
 
 function isValidDate(date: Date | undefined) {
@@ -147,68 +150,58 @@ export function DatePickerInput({
   }
 
   return (
-    <Field className={cn("w-auto min-w-[190px]", className)}>
+    <Field className={cn("w-auto min-w-[200px]", className)}>
       {label && <FieldLabel htmlFor="date-required">{label}</FieldLabel>}
-      <InputGroup className="bg-white border-[#e5e7eb] h-9">
-        <InputGroupInput
-          id="date-required"
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => {
-            const raw = e.target.value
-            setValue(raw)
-            const d = new Date(raw)
-            if (isValidDate(d)) {
-              handleDateChange(d)
-              setMonth(d)
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "ArrowDown") {
-              e.preventDefault()
-              setOpen(true)
-            }
-          }}
-        />
-        <InputGroupAddon align="inline-end">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <InputGroupButton
-                id="date-picker"
-                variant="ghost"
-                size="icon-xs"
-                aria-label="Select date"
-                className="cursor-pointer"
-              >
-                <CalendarIcon className="h-4 w-4" />
-                <span className="sr-only">Select date</span>
-              </InputGroupButton>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-auto overflow-hidden p-0 rounded-xl shadow-xl border-[#e5e7eb]"
-              align="end"
-              alignOffset={-8}
-              sideOffset={10}
-            >
-              <Calendar
-                mode="single"
-                selected={activeDate}
-                month={month}
-                onMonthChange={setMonth}
-                onSelect={(d) => {
-                  handleDateChange(d)
-                  setOpen(false)
-                }}
+      <Popover open={open} onOpenChange={setOpen}>
+        <InputGroup className="bg-white border-[#e5e7eb] h-9 shadow-2xs hover:border-[#d1d5db] transition-colors cursor-pointer">
+          <PopoverTrigger asChild>
+            <div className="flex items-center w-full px-1">
+              <InputGroupInput
+                id="date-required"
+                value={value}
+                placeholder={placeholder}
+                readOnly
+                onClick={() => setOpen(true)}
+                className="cursor-pointer text-xs font-medium text-[#111827]"
               />
-            </PopoverContent>
-          </Popover>
-        </InputGroupAddon>
-      </InputGroup>
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  id="date-picker"
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Select date"
+                  className="cursor-pointer text-[#6b7280] hover:text-[#111827]"
+                >
+                  <CalendarIcon className="h-4 w-4" />
+                  <span className="sr-only">Pilih tanggal</span>
+                </InputGroupButton>
+              </InputGroupAddon>
+            </div>
+          </PopoverTrigger>
+        </InputGroup>
+        <PopoverContent
+          className="w-auto p-0 rounded-2xl shadow-2xl border border-[#e5e7eb] bg-white overflow-hidden"
+          align="end"
+          alignOffset={-4}
+          sideOffset={8}
+        >
+          <Calendar
+            mode="single"
+            locale={id}
+            selected={activeDate}
+            month={month}
+            onMonthChange={setMonth}
+            onSelect={(d) => {
+              handleDateChange(d)
+              setOpen(false)
+            }}
+          />
+        </PopoverContent>
+      </Popover>
     </Field>
   )
 }
 
-// --- STANDARD DATE PICKER (Legacy Compatibility) ---
 interface DatePickerProps {
   date?: Date
   onDateChange?: (date: Date | undefined) => void
@@ -236,12 +229,13 @@ export function DatePicker({
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4 text-[#6b7280]" />
-          {date ? format(date, "dd MMMM yyyy") : <span>{placeholder}</span>}
+          {date ? format(date, "dd MMMM yyyy", { locale: id }) : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 rounded-xl shadow-xl border-[#e5e7eb]" align="start">
+      <PopoverContent className="w-auto p-0 rounded-2xl shadow-2xl border border-[#e5e7eb] bg-white overflow-hidden" align="start">
         <Calendar
           mode="single"
+          locale={id}
           selected={date}
           onSelect={(selectedDate) => {
             onDateChange?.(selectedDate)

@@ -44,7 +44,6 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
   const [userToDelete, setUserToDelete] = useState<any>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // State Pagination & Search
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -53,7 +52,6 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
     setLocalOutlets(outlets)
   }, [outlets])
 
-  // Filter Pengguna
   const filteredUsers = useMemo(() => {
     if (!searchQuery.trim()) return users
     const q = searchQuery.toLowerCase().trim()
@@ -67,17 +65,14 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
     })
   }, [users, searchQuery])
 
-  // Hitung total halaman
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
 
-  // Sesuaikan halaman aktif jika data terfilter
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(1)
     }
   }, [totalPages, currentPage])
 
-  // Potong data sesuai halaman (Paginated)
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize
     return filteredUsers.slice(startIndex, startIndex + pageSize)
@@ -146,7 +141,6 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Search Input */}
             <div className="relative min-w-[220px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={14} />
               <Input
@@ -255,7 +249,6 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
           </Table>
         </div>
 
-        {/* Footer Pagination Controls */}
         <TablePagination
           currentPage={currentPage}
           totalPages={totalPages}

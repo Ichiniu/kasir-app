@@ -68,7 +68,6 @@ export function OutletFormModal({ isOpen, onClose, onSuccess }: OutletFormModalP
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Nama Outlet */}
           <div className="space-y-1">
             <Label htmlFor="nama" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
               Nama Cabang / Outlet <span className="text-red-500">*</span>
@@ -86,7 +85,6 @@ export function OutletFormModal({ isOpen, onClose, onSuccess }: OutletFormModalP
             </div>
           </div>
 
-          {/* Alamat Outlet */}
           <div className="space-y-1">
             <Label htmlFor="alamat" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
               Alamat Lengkap Cabang (Opsional)

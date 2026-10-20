@@ -131,7 +131,6 @@ export function ProductList({
     }).format(amount);
   };
 
-  // Sortable Header Component
   const SortHeader = ({ label, sortKey, align = "left" }: { label: string, sortKey: string, align?: "left" | "right" | "center" }) => {
     const isActive = sortConfig.key === sortKey;
     return (

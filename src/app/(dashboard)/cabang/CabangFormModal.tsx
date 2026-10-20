@@ -114,7 +114,6 @@ export function CabangFormModal({
             </div>
           )}
 
-          {/* Nama Cabang */}
           <div className="space-y-1.5">
             <Label htmlFor="nama-cabang" className="text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
               Nama Cabang <span className="text-red-500">*</span>
@@ -132,7 +131,6 @@ export function CabangFormModal({
             </div>
           </div>
 
-          {/* Alamat Cabang */}
           <div className="space-y-1.5">
             <Label htmlFor="alamat-cabang" className="text-[11px] font-bold text-[#4b5563] uppercase tracking-wider">
               Alamat Lengkap (Opsional)

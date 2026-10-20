@@ -60,7 +60,6 @@ export async function getMultiOutletDashboardData(
     startDate = undefined
   }
 
-  // 1. Ambil semua outlet
   const rawOutlets = await prisma.outlet.findMany({
     select: {
       id: true,
@@ -78,7 +77,6 @@ export async function getMultiOutletDashboardData(
     },
   })
 
-  // 2. Ambil transaksi sesuai rentang waktu
   const transactions = await prisma.transaction.findMany({
     where: {
       paymentStatus: "COMPLETED",
@@ -91,7 +89,6 @@ export async function getMultiOutletDashboardData(
     },
   })
 
-  // 3. Ambil sesi kasir yang sedang aktif (OPEN)
   const openRegisters = await prisma.cashRegister.findMany({
     where: {
       status: "OPEN",
@@ -106,7 +103,6 @@ export async function getMultiOutletDashboardData(
     openRegistersMap.set(reg.outletId, (openRegistersMap.get(reg.outletId) || 0) + 1)
   }
 
-  // 4. Hitung agregasi per outlet
   const outletStatsMap = new Map<
     string,
     {
@@ -146,7 +142,6 @@ export async function getMultiOutletDashboardData(
     totalSystemTransactions += stats.count
   }
 
-  // 5. Buat list performa outlet
   const outletPerformances: OutletPerformance[] = rawOutlets.map((outlet) => {
     const stats = outletStatsMap.get(outlet.id) || {
       revenue: 0,
@@ -174,7 +169,6 @@ export async function getMultiOutletDashboardData(
     }
   })
 
-  // Sort dari omzet tertinggi
   outletPerformances.sort((a, b) => b.totalRevenue - a.totalRevenue)
 
   const topOutlet = outletPerformances.length > 0 && outletPerformances[0].totalRevenue > 0

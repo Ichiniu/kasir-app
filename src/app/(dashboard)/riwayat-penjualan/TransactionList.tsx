@@ -103,7 +103,6 @@ export function TransactionList({
   // Accordion state per sesi kasir (default semua terbuka)
   const [expandedSessions, setExpandedSessions] = useState<Record<string, boolean>>({})
 
-  // Date helpers
   const activeDateObj = useMemo(() => {
     try {
       const [y, m, d] = currentDate.split("-").map(Number)
@@ -143,7 +142,6 @@ export function TransactionList({
     router.push(`${pathname}?date=${format(selectedDate, "yyyy-MM-dd")}`)
   }
 
-  // Toggle sesi kasir
   const toggleSession = (sessionKey: string) => {
     setExpandedSessions(prev => ({
       ...prev,
@@ -160,7 +158,6 @@ export function TransactionList({
     return inv
   }
 
-  // Get unique cashiers
   const cashiers = useMemo(() => {
     const uniqueCashiers = new Map()
     initialTransactions.forEach(t => {
@@ -174,16 +171,13 @@ export function TransactionList({
     return Array.from(uniqueCashiers.values())
   }, [initialTransactions])
 
-  // Filter transactions by cashier and search
   const filteredTransactions = useMemo(() => {
     let filtered = initialTransactions
     
-    // Filter by cashier
     if (cashierFilter !== "all") {
       filtered = filtered.filter(t => t.userId === cashierFilter)
     }
     
-    // Filter by search query (invoice or customer name)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(t => 
@@ -195,7 +189,6 @@ export function TransactionList({
     return filtered
   }, [initialTransactions, cashierFilter, searchQuery])
 
-  // Group by cashier and session
   const groupedTransactions = useMemo(() => {
     const groups: { [key: string]: Transaction[] } = {}
     
@@ -231,7 +224,6 @@ export function TransactionList({
 
   return (
     <div className="space-y-6 font-sans">
-      {/* Header */}
       <div className="flex flex-col gap-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
@@ -244,48 +236,11 @@ export function TransactionList({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Date Controller */}
-            <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-[#e5e7eb] shadow-2xs">
-              <div className="flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={handlePrevDay}
-                  title="Hari Sebelumnya"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827] transition-all cursor-pointer"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleToday}
-                  className={cn(
-                    "h-8 px-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
-                    isToday
-                      ? "bg-[#FFB800] text-black shadow-2xs"
-                      : "hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827]"
-                  )}
-                >
-                  Hari Ini
-                </button>
-                <button
-                  type="button"
-                  onClick={handleNextDay}
-                  title="Hari Berikutnya"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827] transition-all cursor-pointer"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+            <DatePickerInput
+              date={activeDateObj}
+              onDateChange={handleDateSelect}
+            />
 
-              <div className="h-5 w-px bg-[#e5e7eb]" />
-
-              <DatePickerInput
-                date={activeDateObj}
-                onDateChange={handleDateSelect}
-              />
-            </div>
-
-            {/* Cashier Filter */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
@@ -329,7 +284,6 @@ export function TransactionList({
           </div>
         </div>
 
-        {/* Search Input */}
         <div className="relative max-w-sm">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9ca3af]" size={16} />
           <Input
@@ -341,14 +295,12 @@ export function TransactionList({
         </div>
       </div>
 
-      {/* Transactions by Session (Accordion per sesi) */}
       <div className="space-y-6">
         {groupedTransactions.map((group) => {
           const isSessionOpen = expandedSessions[group.key] ?? true
 
           return (
             <div key={group.key} className="bg-white rounded-xl border border-[#e5e7eb] overflow-hidden shadow-2xs">
-              {/* Session Accordion Trigger Header */}
               <div 
                 onClick={() => toggleSession(group.key)}
                 className="px-5 py-4 bg-[#f9fafb] border-b border-[#e5e7eb] flex items-center justify-between cursor-pointer hover:bg-[#f3f4f6] transition-colors select-none"
@@ -420,7 +372,6 @@ export function TransactionList({
                 </div>
               </div>
 
-              {/* Collapsible Content: Transactions Table & Sale-level Accordion */}
               {isSessionOpen && (
                 <div className="overflow-x-auto">
                   <Table>
@@ -440,12 +391,10 @@ export function TransactionList({
                           key={transaction.id} 
                           className="hover:bg-[#f9fafb]/60 border-b-[#e5e7eb] last:border-0 transition-colors"
                         >
-                          {/* Waktu */}
                           <TableCell className="px-5 py-3.5 text-xs font-normal text-[#6b7280]">
                             {format(new Date(transaction.createdAt), "HH:mm", { locale: id })}
                           </TableCell>
 
-                          {/* No. Invoice: regular (400), abu tua, truncated */}
                           <TableCell className="px-5 py-3.5">
                             <span 
                               className="text-xs font-normal text-[#4b5563] font-mono hover:text-[#111827] transition-colors"
@@ -455,14 +404,12 @@ export function TransactionList({
                             </span>
                           </TableCell>
 
-                          {/* Nama Pelanggan: medium (500) */}
                           <TableCell className="px-5 py-3.5">
                             <span className="text-sm font-medium text-[#111827]">
                               {transaction.customerName || "Pelanggan Umum"}
                             </span>
                           </TableCell>
 
-                          {/* Metode */}
                           <TableCell className="px-5 py-3.5">
                             <Badge 
                               variant="outline" 
@@ -477,14 +424,12 @@ export function TransactionList({
                             </Badge>
                           </TableCell>
 
-                          {/* Total Bayar: semibold (600), paling menonjol */}
                           <TableCell className="px-5 py-3.5 text-right">
                             <span className="text-sm font-semibold text-[#111827]">
                               {formatCurrency(transaction.finalAmount)}
                             </span>
                           </TableCell>
 
-                          {/* Aksi: Button Detail (Mata) */}
                           <TableCell className="px-5 py-3.5 text-center">
                             <button
                               type="button"
@@ -520,156 +465,172 @@ export function TransactionList({
         )}
       </div>
 
-      {/* Modal Detail Transaksi (Button X dan CASH terpisah sempurna, tidak tumpang tindih) */}
       <Dialog open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden rounded-2xl bg-white border border-[#e5e7eb] shadow-2xl">
+        <DialogContent className="sm:max-w-[480px] p-6 overflow-hidden rounded-2xl bg-white border border-[#e2e8f0] shadow-xl">
           {selectedTransaction && (
-            <div className="flex flex-col max-h-[85vh]">
-              {/* Header: Diberikan pr-14 dan mr-2 agar badge CASH tidak bertumpuk dengan button X */}
-              <div className="p-5 bg-[#f9fafb] border-b border-[#e5e7eb] pr-14">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-white border border-[#e5e7eb] flex items-center justify-center text-[#111827] shadow-2xs shrink-0">
-                      <Receipt size={20} className="text-[#FFB800]" />
-                    </div>
-                    <div className="min-w-0">
-                      <DialogTitle className="text-base font-semibold text-[#111827]">
-                        Detail Transaksi
-                      </DialogTitle>
-                      <DialogDescription className="text-xs text-[#6b7280] font-mono mt-0.5 break-all">
-                        {selectedTransaction.invoiceNumber}
-                      </DialogDescription>
-                    </div>
-                  </div>
+            <div className="flex flex-col max-h-[85vh] overflow-y-auto pr-0.5">
+              <div className="flex items-center gap-3.5 pr-8">
+                <div className="w-12 h-12 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center shrink-0 shadow-2xs">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="text-[#F59E0B]"
+                  >
+                    <path
+                      d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V9.5C18.8954 9.5 18 10.3954 18 11.5C18 12.6046 18.8954 13.5 20 13.5V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V13.5C5.10457 13.5 6 12.6046 6 11.5C6 10.3954 5.10457 9.5 4 9.5V6Z"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12 7.5V16.5M14 9.5C14 8.67157 13.1046 8 12 8C10.8954 8 10 8.67157 10 9.5C10 10.3284 10.8954 11 12 11C13.1046 11 14 11.6716 14 12.5C14 13.3284 13.1046 14 12 14C10.8954 14 10 13.3284 10 12.5"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <DialogTitle className="text-lg font-bold text-[#111827] tracking-tight">
+                    Detail Transaksi
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-[#64748b] font-mono mt-1 tracking-wider break-all">
+                    {selectedTransaction.invoiceNumber}
+                  </DialogDescription>
+                </div>
+              </div>
 
-                  {/* Badge Pembayaran dengan margin kanan agar tidak terkena tombol X */}
-                  <div className="shrink-0 mr-3">
-                    <Badge
-                      variant="outline"
+              <div className="my-5 border-t border-[#f1f5f9]" />
+
+              <div className="grid grid-cols-2 gap-y-4 gap-x-6">
+                <div>
+                  <span className="text-xs text-[#64748b] block mb-1">Waktu Transaksi</span>
+                  <span className="text-sm font-medium text-[#111827]">
+                    {format(new Date(selectedTransaction.createdAt), "dd MMMM yyyy, HH:mm", { locale: id })}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-xs text-[#64748b] block mb-1">Kasir</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-[#111827]">
+                      {selectedTransaction.user?.name || "Kasir Utama"}
+                    </span>
+                    <span
                       className={cn(
-                        "text-[10px] font-bold px-2.5 py-0.5 border-none rounded uppercase",
+                        "text-[11px] font-semibold px-2 py-0.5 rounded-md border tracking-wide",
                         selectedTransaction.paymentMethod === "CASH"
-                          ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
-                          : "bg-orange-50 text-orange-700 ring-1 ring-orange-200"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-[#FFF7ED] text-[#EA580C] border-[#FED7AA]"
                       )}
                     >
                       {selectedTransaction.paymentMethod}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Metadata Grid */}
-                <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-[#e5e7eb] text-xs">
-                  <div>
-                    <span className="text-[#6b7280] block text-[11px]">Waktu Transaksi</span>
-                    <span className="font-medium text-[#111827]">
-                      {format(new Date(selectedTransaction.createdAt), "dd MMMM yyyy, HH:mm", { locale: id })}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[#6b7280] block text-[11px]">Kasir</span>
-                    <span className="font-medium text-[#111827]">
-                      {selectedTransaction.user?.name || "-"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[#6b7280] block text-[11px]">Pelanggan</span>
-                    <span className="font-medium text-[#111827]">
-                      {selectedTransaction.customerName || "Pelanggan Umum"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[#6b7280] block text-[11px]">Status</span>
-                    <span className="font-semibold text-emerald-600">
-                      Selesai
                     </span>
                   </div>
                 </div>
-              </div>
 
-              {/* Items List - Scrollable */}
-              <div className="p-5 overflow-y-auto space-y-4 flex-1">
                 <div>
-                  <h4 className="text-xs font-semibold text-[#6b7280] uppercase tracking-wider mb-2.5">
-                    Produk Dibeli ({selectedTransaction.transactionItems.length})
-                  </h4>
-                  <div className="rounded-xl border border-[#e5e7eb] overflow-hidden divide-y divide-[#e5e7eb]">
-                    {selectedTransaction.transactionItems.map((item) => (
-                      <div key={item.id} className="p-3 bg-white flex items-center justify-between text-xs hover:bg-[#f9fafb] transition-colors">
-                        <div className="min-w-0 pr-3">
-                          <p className="font-medium text-[#111827] truncate">{item.productName}</p>
-                          <p className="text-[#6b7280] text-[11px] mt-0.5">
-                            {item.quantity} x {formatCurrency(item.price)}
-                          </p>
-                        </div>
-                        <span className="font-semibold text-[#111827] whitespace-nowrap">
-                          {formatCurrency(item.subtotal)}
-                        </span>
-                      </div>
-                    ))}
-                    {selectedTransaction.transactionItems.length === 0 && (
-                      <div className="p-4 text-center text-xs text-[#9ca3af] italic">
-                        Tidak ada rincian item
-                      </div>
-                    )}
-                  </div>
+                  <span className="text-xs text-[#64748b] block mb-1">Pelanggan</span>
+                  <span className="text-sm font-medium text-[#111827]">
+                    {selectedTransaction.customerName || "Pelanggan Umum"}
+                  </span>
                 </div>
 
-                {/* Ringkasan Pembayaran */}
-                <div className="rounded-xl bg-[#f9fafb] p-3.5 space-y-2 border border-[#e5e7eb] text-xs">
-                  <div className="flex justify-between text-[#6b7280]">
-                    <span>Subtotal</span>
-                    <span className="font-medium text-[#111827]">
-                      {formatCurrency(selectedTransaction.totalAmount)}
-                    </span>
-                  </div>
+                <div>
+                  <span className="text-xs text-[#64748b] block mb-1">Status</span>
+                  <span className="text-sm font-semibold text-emerald-600">
+                    Selesai
+                  </span>
+                </div>
+              </div>
 
-                  {selectedTransaction.discountAmount > 0 && (
-                    <div className="flex justify-between text-red-600">
-                      <span>Diskon</span>
-                      <span>-{formatCurrency(selectedTransaction.discountAmount)}</span>
-                    </div>
-                  )}
+              <div className="my-5 border-t border-[#f1f5f9]" />
 
-                  {selectedTransaction.taxAmount > 0 && (
-                    <div className="flex justify-between text-[#6b7280]">
-                      <span>Pajak</span>
-                      <span>+{formatCurrency(selectedTransaction.taxAmount)}</span>
-                    </div>
-                  )}
-
-                  <div className="pt-2 border-t border-[#e5e7eb] flex justify-between items-center">
-                    <span className="font-semibold text-sm text-[#111827]">Total Bayar</span>
-                    <span className="font-bold text-base text-[#111827]">
-                      {formatCurrency(selectedTransaction.finalAmount)}
-                    </span>
-                  </div>
-
-                  {selectedTransaction.paymentMethod === "CASH" && selectedTransaction.cashReceived !== null && (
-                    <div className="pt-2 border-t border-[#e5e7eb]/60 space-y-1 text-[11px] text-[#6b7280]">
-                      <div className="flex justify-between">
-                        <span>Uang Diterima</span>
-                        <span className="font-medium text-[#111827]">
-                          {formatCurrency(selectedTransaction.cashReceived)}
-                        </span>
+              <div>
+                <h4 className="text-xs font-bold text-[#64748b] uppercase tracking-wider mb-3">
+                  PRODUK DIBELI ({selectedTransaction.transactionItems.length})
+                </h4>
+                <div className="space-y-3 max-h-[220px] overflow-y-auto pr-0.5">
+                  {selectedTransaction.transactionItems.map((item) => (
+                    <div 
+                      key={item.id} 
+                      className="p-4 rounded-xl border border-[#e2e8f0] bg-white flex items-center justify-between text-xs shadow-2xs"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-[#111827]">{item.productName}</p>
+                        <p className="text-xs text-[#64748b] mt-1">
+                          {item.quantity} x {formatCurrency(item.price)}
+                        </p>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Kembalian</span>
-                        <span className="font-medium text-emerald-600">
-                          {formatCurrency(selectedTransaction.changeAmount || 0)}
-                        </span>
-                      </div>
+                      <span className="text-sm font-bold text-[#111827]">
+                        {formatCurrency(item.subtotal)}
+                      </span>
+                    </div>
+                  ))}
+                  {selectedTransaction.transactionItems.length === 0 && (
+                    <div className="p-4 rounded-xl border border-[#e2e8f0] text-center text-xs text-[#9ca3af] italic">
+                      Tidak ada rincian item
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Footer */}
-              <div className="p-4 bg-white border-t border-[#e5e7eb] flex justify-end">
+              <div className="rounded-xl bg-[#f8fafc] p-4 border border-[#e2e8f0] space-y-3 mt-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-sm text-[#64748b]">Subtotal</span>
+                  <span className="text-sm font-medium text-[#111827]">
+                    {formatCurrency(selectedTransaction.totalAmount)}
+                  </span>
+                </div>
+
+                {selectedTransaction.discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-xs text-red-600">
+                    <span>Diskon</span>
+                    <span>-{formatCurrency(selectedTransaction.discountAmount)}</span>
+                  </div>
+                )}
+
+                {selectedTransaction.taxAmount > 0 && (
+                  <div className="flex justify-between items-center text-xs text-[#64748b]">
+                    <span>Pajak</span>
+                    <span>+{formatCurrency(selectedTransaction.taxAmount)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center pt-1">
+                  <span className="font-bold text-base text-[#111827]">Total Bayar</span>
+                  <span className="font-bold text-base text-[#111827]">
+                    {formatCurrency(selectedTransaction.finalAmount)}
+                  </span>
+                </div>
+
+                {selectedTransaction.paymentMethod === "CASH" && selectedTransaction.cashReceived !== null && (
+                  <div className="pt-2 border-t border-[#e2e8f0] space-y-1.5 text-xs text-[#64748b]">
+                    <div className="flex justify-between">
+                      <span>Uang Diterima</span>
+                      <span className="font-medium text-[#111827]">
+                        {formatCurrency(selectedTransaction.cashReceived)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Kembalian</span>
+                      <span className="font-medium text-emerald-600">
+                        {formatCurrency(selectedTransaction.changeAmount || 0)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-6 flex justify-end">
                 <Button
                   type="button"
                   onClick={() => setSelectedTransaction(null)}
-                  className="h-9 px-4 rounded-lg bg-[#111827] hover:bg-black text-white text-xs font-medium cursor-pointer"
+                  className="h-9 px-6 rounded-lg bg-[#0f172a] hover:bg-[#1e293b] text-white text-sm font-medium transition-colors cursor-pointer shadow-xs"
                 >
                   Tutup
                 </Button>

@@ -5,7 +5,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker, type NavProps } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>
 
@@ -18,41 +17,40 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("p-3 bg-white", className)}
       classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center h-10",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse space-y-1",
-        head_row: "flex",
-        head_cell:
-          "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-        row: "flex w-full mt-2",
-        cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
-        ),
-        day_range_end: "day-range-end",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground",
-        day_outside:
-          "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
-        day_hidden: "invisible",
-        // Additional v9 support for dropdowns
-        caption_dropdowns: "flex justify-center gap-1",
+        root: "w-fit",
+        months: "flex flex-col sm:flex-row gap-6 relative",
+        month: "space-y-3",
+        month_caption: "flex justify-center items-center h-8 relative font-semibold text-sm",
+        caption_label: "text-sm font-semibold text-[#111827]",
+        nav: "flex items-center gap-1",
+        button_previous:
+          "h-7 w-7 rounded-md border border-[#e5e7eb] flex items-center justify-center hover:bg-[#f3f4f6] text-[#4b5563] hover:text-[#111827] absolute left-1 top-0.5 z-10 cursor-pointer bg-white transition-colors",
+        button_next:
+          "h-7 w-7 rounded-md border border-[#e5e7eb] flex items-center justify-center hover:bg-[#f3f4f6] text-[#4b5563] hover:text-[#111827] absolute right-1 top-0.5 z-10 cursor-pointer bg-white transition-colors",
+        month_grid: "w-full border-collapse space-y-1",
+        weekdays: "flex justify-between mb-1",
+        weekday:
+          "text-[#6b7280] rounded-md w-9 font-medium text-[0.75rem] text-center uppercase tracking-wider",
+        weeks: "flex flex-col gap-1 mt-1",
+        week: "flex w-full justify-between",
+        day: "h-9 w-9 text-center text-xs p-0 relative flex items-center justify-center",
+        day_button:
+          "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-medium text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer",
+        selected:
+          "[&>.rdp-day_button]:bg-[#111827] [&>.rdp-day_button]:text-white [&>.rdp-day_button]:hover:bg-black font-semibold",
+        range_start:
+          "rounded-l-lg [&>.rdp-day_button]:bg-[#111827] [&>.rdp-day_button]:text-white [&>.rdp-day_button]:rounded-l-lg",
+        range_end:
+          "rounded-r-lg [&>.rdp-day_button]:bg-[#111827] [&>.rdp-day_button]:text-white [&>.rdp-day_button]:rounded-r-lg",
+        range_middle:
+          "bg-[#f3f4f6] [&>.rdp-day_button]:bg-transparent [&>.rdp-day_button]:text-[#111827] [&>.rdp-day_button]:rounded-none",
+        today:
+          "font-bold [&>.rdp-day_button]:border [&>.rdp-day_button]:border-[#111827]/40",
+        outside: "opacity-30 pointer-events-none",
+        disabled: "opacity-30 pointer-events-none",
+        hidden: "invisible",
         ...classNames,
       }}
       components={{

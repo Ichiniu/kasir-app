@@ -81,7 +81,6 @@ export function AuditDetailModal({ log, isOpen, onClose }: AuditDetailModalProps
         </div>
 
         <div className="p-6 space-y-8">
-          {/* Metadata Section */}
           <div className="grid grid-cols-2 gap-y-6 gap-x-8">
             <div className="space-y-1">
               <p className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider">Waktu</p>
@@ -112,7 +111,6 @@ export function AuditDetailModal({ log, isOpen, onClose }: AuditDetailModalProps
             </div>
           </div>
 
-          {/* Details Section */}
           {log.details && (
             <div className="space-y-2">
               <p className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider">Deskripsi Kegiatan</p>
@@ -122,7 +120,6 @@ export function AuditDetailModal({ log, isOpen, onClose }: AuditDetailModalProps
             </div>
           )}
 
-          {/* Changes Section */}
           {changes.length > 0 && (
             <div className="space-y-4">
               <p className="text-[11px] font-semibold text-[#6b7280] uppercase tracking-wider">Perubahan Data ({changes.length})</p>
@@ -149,7 +146,6 @@ export function AuditDetailModal({ log, isOpen, onClose }: AuditDetailModalProps
             </div>
           )}
 
-          {/* Technical Info Section */}
           {(oldData || newData) && (
             <details className="group">
               <summary className="text-[11px] font-semibold text-[#9ca3af] uppercase tracking-widest cursor-pointer list-none flex items-center gap-1.5 hover:text-[#6b7280] transition-colors">

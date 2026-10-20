@@ -1,4 +1,3 @@
-// Common TypeScript Types for the application
 
 export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'CASHIER'
 
@@ -105,7 +104,6 @@ export interface Setting {
   updatedAt: Date
 }
 
-// API Response Types
 export interface ApiResponse<T = any> {
   success: boolean
   data?: T
@@ -123,7 +121,6 @@ export interface PaginatedResponse<T> {
   }
 }
 
-// Form Types
 export interface LoginFormData {
   email: string
   password: string
@@ -149,7 +146,6 @@ export interface TransactionFormData {
   notes?: string
 }
 
-// Filter & Sort Types
 export interface ProductFilter {
   search?: string
   categoryId?: string

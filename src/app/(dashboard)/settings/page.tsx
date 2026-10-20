@@ -60,8 +60,8 @@ export default async function SettingsPage() {
       <div className="flex justify-between items-end">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <SettingsIcon size={20} className="text-[##64748b]" />
-            <span className="text-xs font-black text-[##64748b] uppercase tracking-widest">System Configuration</span>
+            <SettingsIcon size={20} className="text-[#64748b]" />
+            <span className="text-xs font-semibold text-[#64748b] uppercase tracking-widest">System Configuration</span>
           </div>
           <h1 className="mt-1 text-2xl font-semibold text-[#111827]">Pengaturan Akun & Outlet</h1>
           <p className="text-[#64748b] mt-1">Kelola akun Superadmin, Admin, dan Kasir beserta penugasan outlet.</p>

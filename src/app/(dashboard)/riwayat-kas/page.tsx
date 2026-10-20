@@ -167,7 +167,6 @@ export default async function RiwayatKasPage({
           </Table>
         </div>
 
-        {/* Pagination UI */}
         <div className="p-4 border-t border-[#e5e7eb] bg-[#f9fafb] flex items-center justify-between">
            <div className="text-[11px] font-medium text-[#6b7280]">
              Menampilkan {skip + 1} - {Math.min(skip + registers.length, total)} dari {total} entitas

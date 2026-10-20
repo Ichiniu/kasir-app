@@ -15,7 +15,6 @@ export default function DashboardLayout({
 
   return (
     <div className="flex bg-[#f8fafc] h-screen overflow-hidden">
-      {/* Sidebar - Controlled by isOpen */}
       <div className={cn(
         "transition-all duration-300 ease-in-out border-r border-[#e2e8f0] bg-white h-full",
         isOpen ? "w-72" : "w-0 overflow-hidden border-r-0"
@@ -23,9 +22,7 @@ export default function DashboardLayout({
         <Sidebar />
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Navbar */}
         <header className="h-16 border-b border-[#e2e8f0] bg-white flex items-center px-6 gap-4 shrink-0">
           <Button
             variant="ghost"
@@ -43,7 +40,6 @@ export default function DashboardLayout({
           </h2>
         </header>
 
-        {/* Dynamic Content */}
         <main className="flex-1 overflow-y-auto min-h-0">
           {children}
         </main>

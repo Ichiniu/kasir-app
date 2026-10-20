@@ -69,7 +69,6 @@ export function UserFormModal({
     e.preventDefault()
     setError("")
 
-    // Validation
     if (!formData.name || !formData.email) {
       setError("Nama dan email harus diisi")
       return
@@ -126,7 +125,6 @@ export function UserFormModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto custom-scrollbar">
-          {/* Name Field */}
           <div className="space-y-1">
             <Label htmlFor="name" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
               Nama Lengkap Personel
@@ -144,7 +142,6 @@ export function UserFormModal({
             </div>
           </div>
 
-          {/* Email Field */}
           <div className="space-y-1">
             <Label htmlFor="email" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
               Alamat Surel (Email)
@@ -162,7 +159,6 @@ export function UserFormModal({
             </div>
           </div>
 
-          {/* Password Field */}
           <div className="space-y-1">
             <Label htmlFor="password" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
               Kata Sandi Akses {user && <span className="text-[9px] text-emerald-500 lowercase"></span>}
@@ -193,7 +189,6 @@ export function UserFormModal({
             )}
           </div>
 
-          {/* Role Field */}
           <div className="space-y-1">
             <Label htmlFor="role" className="text-[10px] font-bold text-[#6b7280] uppercase tracking-wider">
               Otoritas / Hak Akses
@@ -233,7 +228,6 @@ export function UserFormModal({
             </div>
           </div>
 
-          {/* Outlet Field (Dropdown) */}
           {formData.role !== "SUPERADMIN" && (
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -275,14 +269,12 @@ export function UserFormModal({
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-100 rounded-lg italic text-[11px] font-medium text-red-600">
               {error}
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="flex gap-2 pt-2 border-t border-[#f3f4f6]">
             <Button
               type="button"
@@ -297,13 +289,12 @@ export function UserFormModal({
               disabled={loading}
               className="flex-[1.5] h-10 rounded-lg bg-[#111827] hover:bg-black text-white text-[10px] font-bold uppercase transition-all shadow-sm active:scale-[0.98]"
             >
-              {loading ? "Memproses..." : user ? "Update Akun" : "Konfirmasi & Simpan"}
+              {loading ? "Memproses..." : user ? "Simpan" : "Konfirmasi & Simpan"}
             </Button>
           </div>
         </form>
       </DialogContent>
 
-      {/* Nested Outlet Form Modal */}
       <OutletFormModal
         isOpen={isAddOutletOpen}
         onClose={() => setIsAddOutletOpen(false)}

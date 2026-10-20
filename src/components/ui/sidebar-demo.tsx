@@ -5,7 +5,6 @@ import Link from "next/link"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
-// Menu items.
 const items = [
   {
     title: "Home",

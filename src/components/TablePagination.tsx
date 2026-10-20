@@ -34,7 +34,6 @@ export function TablePagination({
     <div
       className={`p-4 border-t border-[#e5e7eb] bg-[#f9fafb] flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${className}`}
     >
-      {/* Informasi Data & Pilihan Rows Per Page */}
       <div className="flex flex-wrap items-center gap-4 text-xs text-[#6b7280]">
         <span>
           Menampilkan <strong className="text-[#111827]">{startItem}</strong> -{" "}
@@ -62,7 +61,6 @@ export function TablePagination({
         )}
       </div>
 
-      {/* Tombol Navigasi Halaman */}
       {totalPages > 1 && (
         <div className="flex items-center gap-1.5 self-end sm:self-auto">
           <Button
