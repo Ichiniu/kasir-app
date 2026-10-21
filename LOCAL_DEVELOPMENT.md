@@ -68,8 +68,8 @@ Password: cashier123
 Server tidak harus memakai `.env` lokal. Untuk server, pakai nilai dari `.env.server.example`, terutama:
 
 ```text
-BETTER_AUTH_URL=https://casirplus.my.id
-NEXTAUTH_URL=https://casirplus.my.id
-NEXT_PUBLIC_APP_URL=https://casirplus.my.id
+BETTER_AUTH_URL=https://kasir.domainanda.com
+NEXTAUTH_URL=https://kasir.domainanda.com
+NEXT_PUBLIC_APP_URL=https://kasir.domainanda.com
 APP_PORT=3003
 ```

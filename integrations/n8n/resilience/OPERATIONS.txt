@@ -124,8 +124,8 @@ PEMULIHAN OPERATOR
 MONITOR DI HOST TERPISAH
 File monitor.mjs + compose.monitor.yml tidak bergantung pada n8n dan tidak punya
 akses database. Set variabel melalui secret/config host, jangan commit .env:
-  N8N_READINESS_URL=https://n8n.ichsanlab.web.id/healthz/readiness
-  CASIR_HEALTH_URL=https://casirplus.my.id/api/health
+  N8N_READINESS_URL=https://n8n.domainanda.com/healthz/readiness
+  CASIR_HEALTH_URL=https://kasir.domainanda.com/api/health
   INDEPENDENT_ALERT_WEBHOOK=<endpoint HTTPS eksternal penerima notifikasi>
 Endpoint notifikasi harus menerima JSON {service,event,time}. Ini bukan adapter
 Telegram/Slack/email langsung; pilih receiver yang sesuai dan uji sebelum produksi.
