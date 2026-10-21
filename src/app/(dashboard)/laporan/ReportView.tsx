@@ -594,42 +594,42 @@ export function ReportView({ title, data, type }: ReportViewProps) {
         </Card>
       </div>
 
-      <Card className="rounded-xl border-none bg-[#FFB800] text-slate-950 p-8 shadow-xl shadow-[#FFB800]/20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/10 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none"></div>
+      <Card className="rounded-xl border-none bg-[#B45309] text-white p-6 md:p-8 shadow-xl shadow-[#B45309]/20 relative overflow-hidden max-w-5xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-black/15 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none"></div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center relative z-10">
            <div className="lg:col-span-4">
-             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/5 border border-black/10 mb-6 backdrop-blur-sm">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 border border-white/20 mb-6 backdrop-blur-sm">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-600 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-300"></span>
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-950">Live from Database</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white">Live from Database</span>
              </div>
              
-             <div className="w-12 h-12 bg-black/10 backdrop-blur-md rounded-xl flex items-center justify-center mb-4 border border-black/10">
-               <CreditCard size={24} className="text-slate-950" />
+             <div className="w-12 h-12 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center mb-4 border border-white/20">
+               <CreditCard size={24} className="text-white" />
              </div>
-             <h2 className="text-2xl font-semibold mb-3 text-slate-950">Mekanisme Pembayaran</h2>
-             <p className="text-slate-800 text-sm leading-relaxed">Analisis metode pembayaran pelanggan untuk optimasi channel transaksi.</p>
+             <h2 className="text-2xl font-semibold mb-3 text-white">Mekanisme Pembayaran</h2>
+             <p className="text-white/85 text-sm leading-relaxed">Analisis metode pembayaran pelanggan untuk optimasi channel transaksi.</p>
            </div>
            
            <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {data?.paymentMethods && Object.entries(data.paymentMethods).map(([method, amount]: [string, any]) => (
-                <div key={method} className="bg-black/10 rounded-xl p-6 border border-black/10 transition-colors hover:bg-black/20 backdrop-blur-sm">
+                <div key={method} className="bg-white/10 rounded-xl p-6 border border-white/20 transition-colors hover:bg-white/15 backdrop-blur-sm">
                    <div className="flex justify-between items-start mb-4">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-900">{method}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white/90">{method}</span>
                    </div>
-                   <h4 className="text-xl font-semibold mb-1 text-slate-950">{formatCurrency(amount)}</h4>
-                   <p className="text-[10px] text-slate-700 mb-4">{((amount / (data?.summary?.totalRevenue || 1)) * 100).toFixed(1)}% dari total</p>
-                   <div className="w-full h-1 bg-black/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-slate-950/60 shadow-none" style={{ width: `${(amount / (data?.summary?.totalRevenue || 1)) * 100}%` }}></div>
+                   <h4 className="text-xl font-semibold mb-1 text-white">{formatCurrency(amount)}</h4>
+                   <p className="text-[10px] text-white/80 mb-4">{((amount / (data?.summary?.totalRevenue || 1)) * 100).toFixed(1)}% dari total</p>
+                   <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-white shadow-none" style={{ width: `${(amount / (data?.summary?.totalRevenue || 1)) * 100}%` }}></div>
                    </div>
                 </div>
               ))}
               {(!data?.paymentMethods || Object.keys(data.paymentMethods).length === 0) && (
-                <div className="col-span-full py-16 text-center text-slate-500 text-sm italic border border-dashed border-black/20 rounded-xl">
+                <div className="col-span-full py-16 text-center text-white/70 text-sm italic border border-dashed border-white/30 rounded-xl">
                   Belum ada data pembayaran
                 </div>
               )}

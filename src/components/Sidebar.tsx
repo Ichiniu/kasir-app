@@ -114,15 +114,25 @@ export function Sidebar() {
   return (
     <div className="flex flex-col h-full w-full bg-white font-sans">
       <div className="h-16 flex items-center px-4 border-b border-[#e2e8f0]">
-        <Link href="/dashboard" className="flex items-center gap-2.5 group">
-          <Image
-            src="/logo.png"
-            alt="Casir+"
-            width={110}
-            height={60}
-            className="h-7 w-auto object-contain transition-transform group-hover:scale-105"
-            priority
-          />
+        <Link href="/dashboard" className="flex items-center gap-3 group w-full">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center p-2 shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+            <Image
+              src="/logo-icon.png"
+              alt="Casir+"
+              width={32}
+              height={32}
+              className="w-full h-full object-contain"
+              priority
+            />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="font-bold text-sm text-[#0f172a] uppercase tracking-wide leading-tight truncate">
+              CASIR+
+            </span>
+            <span className="text-[11px] text-[#64748b] font-medium leading-tight mt-0.5 truncate">
+              Kasir Digital v1.0
+            </span>
+          </div>
         </Link>
       </div>
 

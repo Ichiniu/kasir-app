@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { Sidebar } from "@/components/Sidebar";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -24,31 +23,15 @@ export default function DashboardLayout({
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-[#e2e8f0] bg-white flex items-center px-6 gap-4 shrink-0">
+        <header className="h-16 border-b border-[#e2e8f0] bg-white flex items-center px-6 shrink-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsOpen(!isOpen)}
             className="text-[#64748b] hover:bg-[#f8fafc] rounded-xl hover:text-[#0f172a]"
           >
-            {isOpen ? <Menu size={20} /> : <Menu size={20} />}
+            <Menu size={20} />
           </Button>
-          
-          <div className="h-4 w-px bg-[#e2e8f0] mx-2"></div>
-          
-          <div className="flex items-center gap-3">
-            <Image
-              src="/logo.png"
-              alt="Casir+"
-              width={90}
-              height={48}
-              className="h-6 w-auto object-contain"
-              priority
-            />
-            <h2 className="font-bold text-[#0f172a] text-sm uppercase tracking-widest">
-              KASIR DIGITAL v1.0
-            </h2>
-          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto min-h-0">

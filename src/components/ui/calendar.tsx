@@ -37,17 +37,17 @@ function Calendar({
         week: "flex w-full justify-between",
         day: "h-9 w-9 text-center text-xs p-0 relative flex items-center justify-center",
         day_button:
-          "h-8 w-8 rounded-lg flex items-center justify-center text-xs font-medium text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer",
+          "rdp-day_button h-8 w-8 rounded-lg flex items-center justify-center text-xs font-medium text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer",
         selected:
-          "[&>.rdp-day_button]:bg-[#111827] [&>.rdp-day_button]:text-white [&>.rdp-day_button]:hover:bg-black font-semibold",
+          "rdp-selected [&>button]:!bg-[#B45309] [&>button]:!text-white [&>button]:!font-bold [&>button]:shadow-sm [&>.rdp-day_button]:!bg-[#B45309] [&>.rdp-day_button]:!text-white font-semibold",
         range_start:
-          "rounded-l-lg [&>.rdp-day_button]:bg-[#111827] [&>.rdp-day_button]:text-white [&>.rdp-day_button]:rounded-l-lg",
+          "rdp-range_start rounded-l-lg [&>button]:!bg-[#B45309] [&>button]:!text-white [&>button]:rounded-l-lg",
         range_end:
-          "rounded-r-lg [&>.rdp-day_button]:bg-[#111827] [&>.rdp-day_button]:text-white [&>.rdp-day_button]:rounded-r-lg",
+          "rdp-range_end rounded-r-lg [&>button]:!bg-[#B45309] [&>button]:!text-white [&>button]:rounded-r-lg",
         range_middle:
-          "bg-[#f3f4f6] [&>.rdp-day_button]:bg-transparent [&>.rdp-day_button]:text-[#111827] [&>.rdp-day_button]:rounded-none",
+          "rdp-range_middle bg-[#fef3c7] [&>button]:bg-transparent [&>button]:text-[#92400e] [&>button]:rounded-none",
         today:
-          "font-bold [&>.rdp-day_button]:border [&>.rdp-day_button]:border-[#111827]/40",
+          "rdp-today font-bold [&>button]:border-2 [&>button]:border-[#B45309] [&>button]:text-[#B45309]",
         outside: "opacity-30 pointer-events-none",
         disabled: "opacity-30 pointer-events-none",
         hidden: "invisible",

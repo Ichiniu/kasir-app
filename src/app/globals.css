@@ -96,34 +96,48 @@ textarea::placeholder {
   background-color: #f3f4f6 !important;
 }
 
-.rdp-selected .rdp-day_button {
-  background-color: #111827 !important;
+.rdp-selected button,
+.rdp-selected .rdp-day_button,
+[data-selected] button {
+  background-color: #B45309 !important;
   color: #ffffff !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
   border: none !important;
+  box-shadow: 0 2px 6px rgba(180, 83, 9, 0.35) !important;
 }
 
-.rdp-range_start .rdp-day_button,
-.rdp-range_end .rdp-day_button {
-  background-color: #111827 !important;
+.rdp-range_start button,
+.rdp-range_end button {
+  background-color: #B45309 !important;
   color: #ffffff !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   border-radius: 8px !important;
 }
 
 .rdp-range_middle {
-  background-color: #f3f4f6 !important;
+  background-color: #fef3c7 !important;
 }
 
-.rdp-range_middle .rdp-day_button {
+.rdp-range_middle button {
   background-color: transparent !important;
-  color: #111827 !important;
+  color: #92400e !important;
   border-radius: 0 !important;
 }
 
-.rdp-today:not(.rdp-outside) .rdp-day_button {
+.rdp-today:not(.rdp-outside) button,
+.rdp-today:not(.rdp-outside) .rdp-day_button,
+[data-today]:not([data-outside]) button {
   font-weight: 700 !important;
-  border: 1px solid #e5e7eb !important;
+  border: 2px solid #B45309 !important;
+}
+
+.rdp-today.rdp-selected button,
+.rdp-today.rdp-selected .rdp-day_button,
+[data-today][data-selected] button {
+  background-color: #B45309 !important;
+  color: #ffffff !important;
+  border: 2px solid #B45309 !important;
 }
 
 .rdp-outside {
