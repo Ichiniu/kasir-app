@@ -99,45 +99,49 @@ textarea::placeholder {
 .rdp-selected button,
 .rdp-selected .rdp-day_button,
 [data-selected] button {
-  background-color: #B45309 !important;
-  color: #ffffff !important;
+  background-color: transparent !important;
+  color: #111827 !important;
   font-weight: 700 !important;
-  border-radius: 8px !important;
-  border: none !important;
-  box-shadow: 0 2px 6px rgba(180, 83, 9, 0.35) !important;
+  border-radius: 9999px !important;
+  border: 2px solid #111827 !important;
+  box-shadow: none !important;
 }
 
 .rdp-range_start button,
 .rdp-range_end button {
-  background-color: #B45309 !important;
+  background-color: #111827 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
-  border-radius: 8px !important;
+  border-radius: 9999px !important;
+  border: none !important;
 }
 
 .rdp-range_middle {
-  background-color: #fef3c7 !important;
+  background-color: #f3f4f6 !important;
 }
 
 .rdp-range_middle button {
   background-color: transparent !important;
-  color: #92400e !important;
+  color: #111827 !important;
   border-radius: 0 !important;
 }
 
+/* Hapus penanda kotak hari ini agar tidak ada dua penanda */
 .rdp-today:not(.rdp-outside) button,
 .rdp-today:not(.rdp-outside) .rdp-day_button,
 [data-today]:not([data-outside]) button {
-  font-weight: 700 !important;
-  border: 2px solid #B45309 !important;
+  border: none !important;
+  font-weight: 500 !important;
 }
 
 .rdp-today.rdp-selected button,
 .rdp-today.rdp-selected .rdp-day_button,
 [data-today][data-selected] button {
-  background-color: #B45309 !important;
-  color: #ffffff !important;
-  border: 2px solid #B45309 !important;
+  background-color: transparent !important;
+  color: #111827 !important;
+  border-radius: 9999px !important;
+  border: 2px solid #111827 !important;
+  font-weight: 700 !important;
 }
 
 .rdp-outside {

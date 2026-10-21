@@ -37,17 +37,17 @@ function Calendar({
         week: "flex w-full justify-between",
         day: "h-9 w-9 text-center text-xs p-0 relative flex items-center justify-center",
         day_button:
-          "rdp-day_button h-8 w-8 rounded-lg flex items-center justify-center text-xs font-medium text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer",
+          "rdp-day_button h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer",
         selected:
-          "rdp-selected [&>button]:!bg-[#B45309] [&>button]:!text-white [&>button]:!font-bold [&>button]:shadow-sm [&>.rdp-day_button]:!bg-[#B45309] [&>.rdp-day_button]:!text-white font-semibold",
+          "rdp-selected [&>button]:!bg-transparent [&>button]:!text-[#111827] [&>button]:!border-2 [&>button]:!border-[#111827] [&>button]:!rounded-full [&>button]:!font-bold [&>button]:shadow-none [&>.rdp-day_button]:!bg-transparent [&>.rdp-day_button]:!text-[#111827] [&>.rdp-day_button]:!border-2 [&>.rdp-day_button]:!border-[#111827] [&>.rdp-day_button]:!rounded-full font-bold",
         range_start:
-          "rdp-range_start rounded-l-lg [&>button]:!bg-[#B45309] [&>button]:!text-white [&>button]:rounded-l-lg",
+          "rdp-range_start rounded-l-lg [&>button]:!bg-[#111827] [&>button]:!text-white [&>button]:rounded-l-lg",
         range_end:
-          "rdp-range_end rounded-r-lg [&>button]:!bg-[#B45309] [&>button]:!text-white [&>button]:rounded-r-lg",
+          "rdp-range_end rounded-r-lg [&>button]:!bg-[#111827] [&>button]:!text-white [&>button]:rounded-r-lg",
         range_middle:
-          "rdp-range_middle bg-[#fef3c7] [&>button]:bg-transparent [&>button]:text-[#92400e] [&>button]:rounded-none",
+          "rdp-range_middle bg-[#f3f4f6] [&>button]:bg-transparent [&>button]:text-[#111827] [&>button]:rounded-none",
         today:
-          "rdp-today font-bold [&>button]:border-2 [&>button]:border-[#B45309] [&>button]:text-[#B45309]",
+          "rdp-today [&>button]:border-none [&>.rdp-day_button]:border-none",
         outside: "opacity-30 pointer-events-none",
         disabled: "opacity-30 pointer-events-none",
         hidden: "invisible",
