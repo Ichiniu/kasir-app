@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,11 +30,11 @@ export function UserFormModal({
   onOutletCreated
 }: UserFormModalProps) {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
+    name: user?.name ?? "",
+    email: user?.email ?? "",
     password: "",
-    role: "CASHIER",
-    outletId: ""
+    role: user?.role ?? "CASHIER",
+    outletId: user?.outletId ?? currentOutletId ?? outlets[0]?.id ?? ""
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -42,28 +42,6 @@ export function UserFormModal({
   const [showPassword, setShowPassword] = useState(false)
 
   const isSuperAdmin = currentRole === "SUPERADMIN"
-
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name,
-        email: user.email,
-        password: "",
-        role: user.role,
-        outletId: user.outletId || ""
-      })
-    } else {
-      setFormData({
-        name: "",
-        email: "",
-        password: "",
-        role: "CASHIER",
-        outletId: currentOutletId || (outlets.length > 0 ? outlets[0].id : "")
-      })
-    }
-    setError("")
-    setShowPassword(false)
-  }, [user, isOpen, outlets, currentOutletId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

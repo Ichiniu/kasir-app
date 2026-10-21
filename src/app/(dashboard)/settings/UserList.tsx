@@ -263,7 +263,7 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
         />
       </div>
 
-      <UserFormModal
+      {isFormOpen && <UserFormModal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         user={selectedUser}
@@ -273,7 +273,7 @@ export function UserList({ users, outlets = [], currentRole = "ADMIN", currentOu
         onOutletCreated={(newOutlet) => {
           setLocalOutlets((prev) => [...prev, newOutlet])
         }}
-      />
+      />}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { createLog } from "@/lib/audit"
 import { getSessionUser } from "@/lib/session"
+import { Prisma } from "@prisma/client"
 
 export async function checkCashRegister() {
   let sessionUser;
@@ -43,6 +44,9 @@ export async function openCashRegister(openingBalance: number, notes?: string) {
   if (role === "ADMIN") {
     throw new Error("Akses ditolak: Admin hanya memiliki hak akses read-only.")
   }
+  if (!Number.isFinite(openingBalance) || openingBalance < 0) {
+    throw new Error("Modal awal harus bernilai nol atau lebih")
+  }
 
   if (!outletId && !isSuperAdmin) {
     throw new Error("Pengguna tidak terhubung dengan outlet")
@@ -53,28 +57,23 @@ export async function openCashRegister(openingBalance: number, notes?: string) {
     throw new Error("Tidak ada data outlet yang tersedia")
   }
 
-  const activeRegister = await prisma.cashRegister.findFirst({
-    where: {
-      userId,
-      outletId: targetOutletId,
-      status: "OPEN"
-    },
-    select: {
-      id: true
+  let newRegister
+  try {
+    newRegister = await prisma.cashRegister.create({
+      data: {
+        outletId: targetOutletId,
+        userId,
+        openingBalance,
+        status: "OPEN",
+        openingNotes: notes
+      }
+    })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new Error("Kasir ini sudah memiliki sesi kas yang aktif")
     }
-  })
-
-  if (activeRegister) throw new Error("Kasir ini sudah memiliki sesi kas yang aktif")
-
-  const newRegister = await prisma.cashRegister.create({
-    data: {
-      outletId: targetOutletId,
-      userId,
-      openingBalance: openingBalance,
-      status: "OPEN",
-      openingNotes: notes
-    }
-  })
+    throw error
+  }
 
   revalidatePath("/kasir")
   revalidatePath("/buka-kas")

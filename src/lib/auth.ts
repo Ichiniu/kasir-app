@@ -18,6 +18,7 @@ export const auth = betterAuth({
   ].filter(Boolean) as string[],
   emailAndPassword: {
     enabled: true,
+    disableSignUp: true,
     password: {
       hash: async (password) => await bcrypt.hash(password, 10),
       verify: async ({ hash, password }) => await bcrypt.compare(password, hash),
@@ -29,15 +30,18 @@ export const auth = betterAuth({
         type: "string",
         required: true,
         defaultValue: "CASHIER",
+        input: false,
       },
       isActive: {
         type: "boolean",
         required: true,
         defaultValue: true,
+        input: false,
       },
       outletId: {
         type: "string",
         required: false,
+        input: false,
       },
     },
   },

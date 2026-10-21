@@ -107,7 +107,9 @@ export default async function RiwayatKasPage({
                 </TableRow>
               ) : (
                 registers.map((reg) => {
-                  const diff = reg.actualCash ? Number(reg.actualCash) - (Number(reg.openingBalance) + Number(reg.totalSales)) : 0
+                  const diff = reg.actualCash !== null && reg.closingBalance !== null
+                    ? Number(reg.actualCash) - Number(reg.closingBalance)
+                    : 0
 
                   return (
                     <TableRow key={reg.id} className="hover:bg-[#f9fafb] transition-colors border-b-[#e5e7eb] last:border-0">
@@ -139,7 +141,7 @@ export default async function RiwayatKasPage({
                       <TableCell className="px-6 py-4 text-right">
                         <div className="flex flex-col items-end">
                           <span className="text-xs font-bold text-[#111827]">
-                            {reg.actualCash ? formatCurrency(Number(reg.actualCash)) : "-"}
+                            {reg.actualCash !== null ? formatCurrency(Number(reg.actualCash)) : "-"}
                           </span>
                           {reg.status === "CLOSED" && (
                             <span className={cn(

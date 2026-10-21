@@ -112,7 +112,7 @@ export function CategoryList({ categories }: { categories: CategoryItem[] }) {
     setSortConfig({ key, direction })
   }
 
-  const SortHeader = ({
+  const renderSortHeader = ({
     label,
     sortKey,
     align = "left",
@@ -208,9 +208,9 @@ export function CategoryList({ categories }: { categories: CategoryItem[] }) {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b-[#e5e7eb]">
-                <SortHeader label="Nama Kategori" sortKey="name" />
-                <SortHeader label="Deskripsi" sortKey="description" />
-                <SortHeader label="Jumlah Produk Terkait" sortKey="productsCount" align="center" />
+                {renderSortHeader({ label: "Nama Kategori", sortKey: "name" })}
+                {renderSortHeader({ label: "Deskripsi", sortKey: "description" })}
+                {renderSortHeader({ label: "Jumlah Produk Terkait", sortKey: "productsCount", align: "center" })}
                 <TableHead className="font-semibold text-[#6b7280] h-12 text-center text-[11px] uppercase tracking-wider px-4 border-b border-[#e5e7eb] w-[120px]">
                   AKSI
                 </TableHead>

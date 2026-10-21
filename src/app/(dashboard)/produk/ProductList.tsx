@@ -131,7 +131,7 @@ export function ProductList({
     }).format(amount);
   };
 
-  const SortHeader = ({ label, sortKey, align = "left" }: { label: string, sortKey: string, align?: "left" | "right" | "center" }) => {
+  const renderSortHeader = ({ label, sortKey, align = "left" }: { label: string, sortKey: string, align?: "left" | "right" | "center" }) => {
     const isActive = sortConfig.key === sortKey;
     return (
       <TableHead 
@@ -250,13 +250,13 @@ export function ProductList({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b-[#e5e7eb]">
-                <SortHeader label="SKU" sortKey="sku" />
-                <SortHeader label="Nama Produk" sortKey="name" />
-                <SortHeader label="Kategori" sortKey="category" />
-                <SortHeader label="Harga Modal" sortKey="cost" align="right" />
-                <SortHeader label="Harga Jual" sortKey="price" align="right" />
+                {renderSortHeader({ label: "SKU", sortKey: "sku" })}
+                {renderSortHeader({ label: "Nama Produk", sortKey: "name" })}
+                {renderSortHeader({ label: "Kategori", sortKey: "category" })}
+                {renderSortHeader({ label: "Harga Modal", sortKey: "cost", align: "right" })}
+                {renderSortHeader({ label: "Harga Jual", sortKey: "price", align: "right" })}
                 <TableHead className="font-semibold text-[#6b7280] h-12 text-center text-[11px] uppercase tracking-wider px-4 border-b border-[#e5e7eb]">UNIT</TableHead>
-                <SortHeader label="Stok" sortKey="stock" align="center" />
+                {renderSortHeader({ label: "Stok", sortKey: "stock", align: "center" })}
                 <TableHead className="font-semibold text-[#6b7280] h-12 text-center text-[11px] uppercase tracking-wider px-4 border-b border-[#e5e7eb]">AKSI</TableHead>
               </TableRow>
             </TableHeader>

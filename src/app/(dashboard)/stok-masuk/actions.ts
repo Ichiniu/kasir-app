@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { createLog } from "@/lib/audit"
 import { getSessionUser } from "@/lib/session"
+import { parseStockInAmounts } from "@/utils/validation"
 
 export async function createStockIn(data: any) {
   const { outletId, isSuperAdmin, role } = await getSessionUser()
@@ -12,9 +13,7 @@ export async function createStockIn(data: any) {
   }
   const { productId, quantity, cost, price, notes } = data
 
-  const qty = parseInt(quantity)
-  const costNum = parseFloat(cost)
-  const priceNum = parseFloat(price)
+  const { qty, costNum, priceNum } = parseStockInAmounts(quantity, cost, price)
 
   // Verify product belongs to user's outlet
   const product = await prisma.product.findFirst({

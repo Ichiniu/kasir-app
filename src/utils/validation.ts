@@ -3,7 +3,7 @@ import { z } from 'zod'
 /**
  * Validation schemas using Zod
  */
-
+
 export const loginSchema = z.object({
   email: z.string().email('Email tidak valid'),
   password: z.string().min(6, 'Password minimal 6 karakter'),
@@ -18,7 +18,7 @@ export const registerSchema = z.object({
   message: 'Password tidak sama',
   path: ['confirmPassword'],
 })
-
+
 export const productSchema = z.object({
   sku: z.string().min(1, 'SKU wajib diisi'),
   name: z.string().min(3, 'Nama produk minimal 3 karakter'),
@@ -31,12 +31,12 @@ export const productSchema = z.object({
   imageUrl: z.string().url('URL gambar tidak valid').optional().or(z.literal('')),
   isActive: z.boolean().default(true),
 })
-
+
 export const categorySchema = z.object({
   name: z.string().min(3, 'Nama kategori minimal 3 karakter'),
   description: z.string().optional(),
 })
-
+
 export const transactionItemSchema = z.object({
   productId: z.string(),
   productName: z.string(),
@@ -61,7 +61,7 @@ export const transactionSchema = z.object({
   message: 'Jumlah uang yang diterima wajib diisi untuk pembayaran cash',
   path: ['cashReceived'],
 })
-
+
 export const userSchema = z.object({
   name: z.string().min(3, 'Nama minimal 3 karakter'),
   email: z.string().email('Email tidak valid'),
@@ -69,12 +69,24 @@ export const userSchema = z.object({
   role: z.enum(['ADMIN', 'CASHIER']),
   isActive: z.boolean().default(true),
 })
-
+
 export const settingSchema = z.object({
   key: z.string().min(1, 'Key wajib diisi'),
   value: z.string().min(1, 'Value wajib diisi'),
 })
-
+
+export function parseStockInAmounts(quantity: unknown, cost: unknown, price: unknown) {
+  const qty = Number(quantity)
+  const costNum = Number(cost)
+  const priceNum = Number(price)
+  if (!Number.isSafeInteger(qty) || qty <= 0) throw new Error('Kuantitas masuk harus bilangan bulat positif')
+  if (cost == null || cost === '' || price == null || price === '' ||
+      !Number.isFinite(costNum) || costNum < 0 || !Number.isFinite(priceNum) || priceNum < 0) {
+    throw new Error('Harga modal dan jual harus angka nol atau lebih')
+  }
+  return { qty, costNum, priceNum }
+}
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
 export type ProductInput = z.infer<typeof productSchema>

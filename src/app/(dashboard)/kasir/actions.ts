@@ -56,19 +56,25 @@ export async function createTransaction(rawData: unknown) {
 
   try {
     const transaction = await prisma.$transaction(async (tx) => {
-      // Derive the outlet from a verified open register instead of trusting the client.
-      const register = await tx.cashRegister.findFirst({
+      // Hold the register row until the sale commits, so closing waits for this sale.
+      const locked = await tx.cashRegister.updateMany({
         where: {
           id: data.cashRegisterId,
           userId,
           status: "OPEN",
           ...(outletId ? { outletId } : {}),
         },
-        select: { id: true, outletId: true },
+        data: { totalSales: { increment: 0 } },
       })
-      if (!register) {
+      if (locked.count !== 1) {
         throw new Error("Sesi kas tidak valid atau sudah ditutup")
       }
+
+      const register = await tx.cashRegister.findUnique({
+        where: { id: data.cashRegisterId },
+        select: { id: true, outletId: true },
+      })
+      if (!register) throw new Error("Sesi kas tidak valid atau sudah ditutup")
 
       const targetOutletId = register.outletId
       const quantities = new Map<string, number>()

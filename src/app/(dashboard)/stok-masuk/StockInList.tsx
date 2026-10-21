@@ -90,7 +90,7 @@ export function StockInList({
     setSortConfig({ key, direction });
   }
 
-  const SortHeader = ({ label, sortKey, align = "left" }: { label: string, sortKey: string, align?: "left" | "right" | "center" }) => {
+  const renderSortHeader = ({ label, sortKey, align = "left" }: { label: string, sortKey: string, align?: "left" | "right" | "center" }) => {
     const isActive = sortConfig.key === sortKey;
     return (
       <TableHead 
@@ -165,11 +165,11 @@ export function StockInList({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent border-b-[#e5e7eb]">
-                <SortHeader label="Tanggal" sortKey="createdAt" />
-                <SortHeader label="Produk" sortKey="product" />
-                <SortHeader label="Qty" sortKey="quantity" align="center" />
-                <SortHeader label="Harga Modal" sortKey="cost" align="right" />
-                <SortHeader label="Harga Jual" sortKey="price" align="right" />
+                {renderSortHeader({ label: "Tanggal", sortKey: "createdAt" })}
+                {renderSortHeader({ label: "Produk", sortKey: "product" })}
+                {renderSortHeader({ label: "Qty", sortKey: "quantity", align: "center" })}
+                {renderSortHeader({ label: "Harga Modal", sortKey: "cost", align: "right" })}
+                {renderSortHeader({ label: "Harga Jual", sortKey: "price", align: "right" })}
                 <TableHead className="font-semibold text-[#6b7280] h-12 text-[11px] uppercase tracking-wider px-4 border-b border-[#e5e7eb]">CATATAN</TableHead>
               </TableRow>
             </TableHeader>

@@ -16,6 +16,8 @@ interface TutupKasFormProps {
     id: string
     openingBalance: number
     totalSales: number
+    cashSales: number
+    qrisSales: number
   } | null
   isReadOnly?: boolean
 }
@@ -27,7 +29,7 @@ export function TutupKasForm({ activeRegister, isReadOnly = false }: TutupKasFor
   const [error, setError] = useState("")
   const router = useRouter()
 
-  const systemTotal = activeRegister ? activeRegister.openingBalance + activeRegister.totalSales : 0
+  const systemTotal = activeRegister ? activeRegister.openingBalance + activeRegister.cashSales : 0
   const actualCashNum = Number(actualCash.replace(/[^0-9]/g, ""))
   const difference = actualCashNum - systemTotal
 
@@ -114,6 +116,11 @@ export function TutupKasForm({ activeRegister, isReadOnly = false }: TutupKasFor
             <p className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider mb-1">Total Penjualan</p>
             <p className="text-lg font-bold text-[#FFB800]">+{formatCurrency(activeRegister.totalSales)}</p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 text-sm text-[#6b7280]">
+          <p>Penjualan CASH: {formatCurrency(activeRegister.cashSales)}</p>
+          <p>Penjualan QRIS: {formatCurrency(activeRegister.qrisSales)}</p>
         </div>
 
         <div className="p-6 bg-[#111827] rounded-xl text-center">

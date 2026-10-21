@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { createLog } from "@/lib/audit"
 import { getSessionUser } from "@/lib/session"
+import { getRegisterSales } from "@/lib/register-sales"
 
 export async function getActiveRegister() {
   let sessionUser;
@@ -31,20 +32,14 @@ export async function getActiveRegister() {
 
   if (!activeRegister) return null
 
-  // Get total sales for this specific register session
-  const transactions = await prisma.transaction.findMany({
-    where: {
-      cashRegisterId: activeRegister.id,
-      ...(activeRegister.outletId ? { outletId: activeRegister.outletId } : {})
-    }
-  })
-
-  const totalSales = transactions.reduce((sum, t) => sum + Number(t.finalAmount), 0)
+  const sales = await getRegisterSales(prisma, activeRegister.id)
 
   return {
     id: activeRegister.id,
     openingBalance: Number(activeRegister.openingBalance),
-    totalSales: totalSales,
+    totalSales: Number(sales.total),
+    cashSales: Number(sales.cash),
+    qrisSales: Number(sales.qris),
     openedAt: activeRegister.openedAt.toISOString()
   }
 }
@@ -55,42 +50,36 @@ export async function closeCashRegister(actualCash: number, notes?: string) {
   if (role === "ADMIN") {
     throw new Error("Akses ditolak: Admin hanya memiliki hak akses read-only.")
   }
+  if (!Number.isFinite(actualCash) || actualCash < 0) {
+    throw new Error("Uang tunai fisik harus bernilai nol atau lebih")
+  }
 
-  const activeRegister = await prisma.cashRegister.findFirst({
-    where: {
-      userId,
-      status: "OPEN",
-      ...(outletId ? { outletId } : {})
-    },
-    select: {
-      id: true,
-      outletId: true,
-      openingBalance: true
-    }
-  })
+  const { activeRegister, closingBalance } = await prisma.$transaction(async (tx) => {
+    const activeRegister = await tx.cashRegister.findFirst({
+      where: { userId, status: "OPEN", ...(outletId ? { outletId } : {}) },
+      select: { id: true, outletId: true, openingBalance: true },
+    })
+    if (!activeRegister) throw new Error("Tidak ditemukan sesi kas aktif untuk ditutup")
 
-  if (!activeRegister) throw new Error("Tidak ditemukan sesi kas aktif untuk ditutup")
+    const claimed = await tx.cashRegister.updateMany({
+      where: { id: activeRegister.id, userId, status: "OPEN" },
+      data: { status: "CLOSED" },
+    })
+    if (claimed.count !== 1) throw new Error("Sesi kas sudah ditutup")
 
-  // Calculate closing balance (Opening + Total Sales)
-  const transactions = await prisma.transaction.findMany({
-    where: { 
-      cashRegisterId: activeRegister.id,
-      ...(activeRegister.outletId ? { outletId: activeRegister.outletId } : {})
-    }
-  })
-  const totalSales = transactions.reduce((sum, t) => sum + Number(t.finalAmount), 0)
-  const closingBalance = Number(activeRegister.openingBalance) + totalSales
-
-  await prisma.cashRegister.update({
-    where: { id: activeRegister.id },
-    data: {
-      status: "CLOSED",
-      closingBalance: closingBalance,
-      actualCash: actualCash,
-      totalSales: totalSales,
-      closedAt: new Date(),
-      closingNotes: notes
-    }
+    const sales = await getRegisterSales(tx, activeRegister.id)
+    const closingBalance = activeRegister.openingBalance.add(sales.cash)
+    await tx.cashRegister.update({
+      where: { id: activeRegister.id },
+      data: {
+        closingBalance,
+        actualCash,
+        totalSales: sales.total,
+        closedAt: new Date(),
+        closingNotes: notes,
+      },
+    })
+    return { activeRegister, closingBalance: Number(closingBalance) }
   })
 
   revalidatePath("/kasir")
