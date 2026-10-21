@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache"
 import { createLog } from "@/lib/audit"
 import { getSessionUser } from "@/lib/session"
 import { z } from "zod"
+import { findPreviousSale } from "@/lib/transaction-idempotency"
 
 const inputSchema = z.object({
   items: z.array(z.object({
@@ -17,6 +18,7 @@ const inputSchema = z.object({
   cashReceived: z.coerce.number().finite().nonnegative().nullable().optional(),
   customerName: z.string().trim().max(120).nullable().optional(),
   cashRegisterId: z.string().min(1),
+  clientRequestId: z.string().uuid().optional(),
 }).superRefine((data, context) => {
   if (data.paymentMethod === "CASH" && data.cashReceived == null) {
     context.addIssue({
@@ -56,6 +58,17 @@ export async function createTransaction(rawData: unknown) {
 
   try {
     const transaction = await prisma.$transaction(async (tx) => {
+      const findPrevious = async () => data.clientRequestId
+        ? tx.transaction.findUnique({
+          where: { clientRequestId: data.clientRequestId },
+          include: { transactionItems: true },
+        })
+        : null
+      const previous = await findPreviousSale(findPrevious, userId, data.cashRegisterId)
+      if (previous) {
+        return { transaction: previous, isNew: false }
+      }
+
       // Hold the register row until the sale commits, so closing waits for this sale.
       const locked = await tx.cashRegister.updateMany({
         where: {
@@ -75,6 +88,13 @@ export async function createTransaction(rawData: unknown) {
         select: { id: true, outletId: true },
       })
       if (!register) throw new Error("Sesi kas tidak valid atau sudah ditutup")
+
+      if (data.clientRequestId) {
+        const existing = await findPreviousSale(findPrevious, userId, register.id)
+        if (existing) {
+          return { transaction: existing, isNew: false }
+        }
+      }
 
       const targetOutletId = register.outletId
       const quantities = new Map<string, number>()
@@ -158,6 +178,7 @@ export async function createTransaction(rawData: unknown) {
           customerName: data.customerName || "Umum",
           userId,
           cashRegisterId: register.id,
+          clientRequestId: data.clientRequestId,
           transactionItems: { create: transactionItems },
         },
         include: { transactionItems: true },
@@ -168,34 +189,34 @@ export async function createTransaction(rawData: unknown) {
         data: { totalSales: { increment: totalAmount } },
       })
 
-      return newTransaction
+      return { transaction: newTransaction, isNew: true }
     })
 
     revalidatePath("/riwayat-penjualan")
     revalidatePath("/produk")
     revalidatePath("/laporan")
 
-    await createLog(
+    if (transaction.isNew) await createLog(
       "CREATE_TRANSACTION",
       "TRANSACTION",
-      transaction.id,
-      `Penjualan No. ${transaction.invoiceNumber} sebesar Rp ${Number(transaction.finalAmount).toLocaleString("id-ID")}`,
+      transaction.transaction.id,
+      `Penjualan No. ${transaction.transaction.invoiceNumber} sebesar Rp ${Number(transaction.transaction.finalAmount).toLocaleString("id-ID")}`,
       null,
       null,
-      transaction.outletId,
+      transaction.transaction.outletId,
     )
 
     const serializedTransaction = {
-      ...transaction,
-      totalAmount: Number(transaction.totalAmount),
-      discountAmount: Number(transaction.discountAmount),
-      taxAmount: Number(transaction.taxAmount),
-      finalAmount: Number(transaction.finalAmount),
-      cashReceived: transaction.cashReceived ? Number(transaction.cashReceived) : null,
-      changeAmount: transaction.changeAmount ? Number(transaction.changeAmount) : null,
-      createdAt: transaction.createdAt.toISOString(),
-      updatedAt: transaction.updatedAt.toISOString(),
-      transactionItems: transaction.transactionItems.map(item => ({
+      ...transaction.transaction,
+      totalAmount: Number(transaction.transaction.totalAmount),
+      discountAmount: Number(transaction.transaction.discountAmount),
+      taxAmount: Number(transaction.transaction.taxAmount),
+      finalAmount: Number(transaction.transaction.finalAmount),
+      cashReceived: transaction.transaction.cashReceived ? Number(transaction.transaction.cashReceived) : null,
+      changeAmount: transaction.transaction.changeAmount ? Number(transaction.transaction.changeAmount) : null,
+      createdAt: transaction.transaction.createdAt.toISOString(),
+      updatedAt: transaction.transaction.updatedAt.toISOString(),
+      transactionItems: transaction.transaction.transactionItems.map(item => ({
         ...item,
         price: Number(item.price),
         subtotal: Number(item.subtotal),

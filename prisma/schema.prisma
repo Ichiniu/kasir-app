@@ -328,6 +328,7 @@ model MaterialRequestLine {
 // Transaction Model - Transaksi penjualan
 model Transaction {
   id              String            @id @default(cuid())
+  clientRequestId String?           @unique
   outletId        String
   invoiceNumber   String            @unique
   totalAmount     Decimal           @db.Decimal(10, 2)

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test src/lib/register-sales.test.ts src/utils/validation.test.ts",
+    "test": "tsx --test src/lib/register-sales.test.ts src/lib/transaction-idempotency.test.ts src/utils/validation.test.ts",
     "typecheck": "tsc --noEmit",
     "seed": "tsx prisma/seed.ts",
     "db:push": "prisma db push",
@@ -15,6 +15,7 @@
     "db:generate": "prisma generate"
   },
   "dependencies": {
+    "@better-auth/expo": "1.6.5",
     "@better-auth/prisma-adapter": "^1.1.20",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^6.2.0",

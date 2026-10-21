@@ -2,14 +2,17 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
+import { expo } from "@better-auth/expo";
 
 export const auth = betterAuth({
+  plugins: [expo()],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000",
   secret: process.env.BETTER_AUTH_SECRET || process.env.NEXTAUTH_SECRET || "fallback-secret-for-dev-only",
   trustedOrigins: [
+    "kasirtablet://",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     process.env.BETTER_AUTH_URL || "",
